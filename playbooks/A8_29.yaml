@@ -1,0 +1,64 @@
+# ============================================================
+# A.8.29 - Security Testing in Development and Acceptance
+# ============================================================
+# Checks for stale accounts, inactive computers, and group hygiene.
+
+control: "A.8.29"
+control_name: "Security Testing in Development and Acceptance"
+
+checks:
+  - id: "A.8.29.1"
+    title: "No Inactive User Accounts (90+ Days)"
+    description: "User accounts that have not logged in for 90+ days should be disabled or removed."
+    severity: "medium"
+    powershell: |
+      $cutoff = (Get-Date).AddDays(-90)
+      $inactive = Get-ADUser -Filter {LastLogonDate -lt $cutoff -and Enabled -eq $true} -Properties LastLogonDate | Measure-Object
+      $inactive.Count
+    check:
+      operator: "less_than_equal"
+      expected: "10"
+    remediation: |
+      1. List inactive accounts:
+         $cutoff = (Get-Date).AddDays(-90)
+         Get-ADUser -Filter {LastLogonDate -lt $cutoff -and Enabled -eq $true} -Properties LastLogonDate | Select Name,LastLogonDate
+      2. Disable inactive accounts:
+         Get-ADUser -Filter {LastLogonDate -lt $cutoff -and Enabled -eq $true} | Disable-ADAccount
+      3. Set up a scheduled task to review inactive accounts monthly
+
+  - id: "A.8.29.2"
+    title: "No Stale Computer Accounts (90+ Days)"
+    description: "Computer accounts that have not authenticated in 90+ days may indicate decommissioned machines and should be cleaned up."
+    severity: "low"
+    powershell: |
+      $cutoff = (Get-Date).AddDays(-90)
+      $stale = Get-ADComputer -Filter {LastLogonDate -lt $cutoff -and Enabled -eq $true} -Properties LastLogonDate | Measure-Object
+      $stale.Count
+    check:
+      operator: "less_than_equal"
+      expected: "20"
+    remediation: |
+      1. List stale computers:
+         $cutoff = (Get-Date).AddDays(-90)
+         Get-ADComputer -Filter {LastLogonDate -lt $cutoff -and Enabled -eq $true} -Properties LastLogonDate | Select Name,LastLogonDate
+      2. Disable stale accounts:
+         Get-ADComputer -Filter {LastLogonDate -lt $cutoff -and Enabled -eq $true} | Disable-ADAccount
+      3. Move to a "Disabled" OU for review before deletion
+
+  - id: "A.8.29.3"
+    title: "Excessive Group Nesting Detected"
+    description: "Deeply nested group membership (groups within groups) can lead to unintended privilege escalation and should be minimized."
+    severity: "low"
+    powershell: |
+      $groups = Get-ADGroup -Filter {GroupCategory -eq 'Security'} -Properties MemberOf
+      $nested = $groups | Where-Object { ($_.MemberOf | Measure-Object).Count -gt 3 }
+      ($nested | Measure-Object).Count
+    check:
+      operator: "less_than_equal"
+      expected: "5"
+    remediation: |
+      1. Review nested groups:
+         Get-ADGroup -Filter {GroupCategory -eq 'Security'} -Properties MemberOf | Where { ($_.MemberOf).Count -gt 3 } | Select Name,@{N='Nesting';E={($_.MemberOf).Count}}
+      2. Flatten group structures where possible
+      3. Document any necessary deep nesting with justification
+      4. Use group nesting best practices (AGDLP)

@@ -1,0 +1,41 @@
+# ============================================================
+# A.8.22 - Segregation in Networks
+# ============================================================
+# Checks AD sites, subnets, and network segmentation.
+
+control: "A.8.22"
+control_name: "Segregation in Networks"
+
+checks:
+  - id: "A.8.22.1"
+    title: "AD Sites Configured"
+    description: "Active Directory Sites should be configured to represent physical network topology for replication optimization."
+    severity: "medium"
+    powershell: |
+      (Get-ADReplicationSite -Filter * | Measure-Object).Count
+    check:
+      operator: "greater_than_equal"
+      expected: "1"
+    remediation: |
+      1. Open AD Sites and Services (dssite.msc)
+      2. Create sites for each physical location:
+         New-ADReplicationSite -Name "HeadOffice"
+         New-ADReplicationSite -Name "BranchOffice"
+      3. Associate subnets with sites
+      4. Configure site links for replication
+
+  - id: "A.8.22.2"
+    title: "AD Subnets Defined"
+    description: "AD subnets should be defined and associated with sites to ensure clients authenticate against the nearest DC."
+    severity: "medium"
+    powershell: |
+      (Get-ADReplicationSubnet -Filter * | Measure-Object).Count
+    check:
+      operator: "greater_than_equal"
+      expected: "1"
+    remediation: |
+      1. Define subnets for your network:
+         New-ADReplicationSubnet -Name "10.0.0.0/24" -Site "HeadOffice"
+         New-ADReplicationSubnet -Name "10.1.0.0/24" -Site "BranchOffice"
+      2. Ensure all network ranges are covered
+      3. Verify client site assignment: nltest /dsgetsite

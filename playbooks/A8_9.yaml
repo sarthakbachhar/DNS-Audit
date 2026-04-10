@@ -1,0 +1,48 @@
+# ============================================================
+# A.8.9 - Configuration Management
+# ============================================================
+# Checks Group Policy configuration and baseline management.
+
+control: "A.8.9"
+control_name: "Configuration Management"
+
+checks:
+  - id: "A.8.9.1"
+    title: "Group Policies Defined"
+    description: "Multiple Group Policies should be defined to manage system configurations across the domain."
+    severity: "medium"
+    powershell: |
+      (Get-GPO -All | Measure-Object).Count
+    check:
+      operator: "greater_than_equal"
+      expected: "3"
+    remediation: |
+      1. Create Group Policies for key areas:
+         - Security baseline (password, lockout)
+         - Windows Firewall
+         - Audit policy
+         - Software restrictions
+      2. Use Group Policy Management Console to create and link GPOs
+      3. Consider using Microsoft Security Compliance Toolkit baselines
+
+  - id: "A.8.9.2"
+    title: "GPOs Linked to OUs"
+    description: "Group Policies should be linked to Organizational Units to enforce configuration standards."
+    severity: "medium"
+    powershell: |
+      $linked = Get-GPO -All | Where-Object { 
+        $links = (Get-GPOReport -Guid $_.Id -ReportType Xml) -match 'LinksTo'
+        $links
+      }
+      if ($linked) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Open Group Policy Management Console
+      2. Right-click the target OU
+      3. Select "Link an Existing GPO..."
+      4. Ensure GPOs are linked at appropriate levels:
+         - Domain level for security baselines
+         - OU level for role-specific policies
+      5. Use gpresult /r to verify GPO application

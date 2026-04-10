@@ -1,0 +1,152 @@
+# ============================================================
+# A.8.5 - Secure Authentication
+# ============================================================
+# Checks AD password policies, Kerberos settings, lockout policies.
+
+control: "A.8.5"
+control_name: "Secure Authentication"
+
+checks:
+  - id: "A.8.5.1"
+    title: "Minimum Password Length >= 12"
+    description: "The domain password policy should enforce a minimum password length of at least 12 characters."
+    severity: "high"
+    powershell: |
+      (Get-ADDefaultDomainPasswordPolicy).MinPasswordLength
+    check:
+      operator: "greater_than_equal"
+      expected: "12"
+    remediation: |
+      1. Open Group Policy Management Console
+      2. Edit the Default Domain Policy
+      3. Navigate to: Computer Configuration > Policies > Windows Settings >
+         Security Settings > Account Policies > Password Policy
+      4. Set "Minimum password length" to 12 or higher
+      5. Run: gpupdate /force
+
+  - id: "A.8.5.2"
+    title: "Password Complexity Enabled"
+    description: "Password complexity requirements should be enabled to enforce strong passwords containing uppercase, lowercase, digits, and special characters."
+    severity: "high"
+    powershell: |
+      (Get-ADDefaultDomainPasswordPolicy).ComplexityEnabled
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Open Group Policy Management Console
+      2. Edit the Default Domain Policy
+      3. Navigate to: Computer Configuration > Policies > Windows Settings >
+         Security Settings > Account Policies > Password Policy
+      4. Enable "Password must meet complexity requirements"
+      5. Run: gpupdate /force
+
+  - id: "A.8.5.3"
+    title: "Maximum Password Age <= 90 Days"
+    description: "Passwords should expire within 90 days to limit exposure from compromised credentials."
+    severity: "medium"
+    powershell: |
+      (Get-ADDefaultDomainPasswordPolicy).MaxPasswordAge.Days
+    check:
+      operator: "less_than_equal"
+      expected: "90"
+    remediation: |
+      1. Open Group Policy Management Console
+      2. Edit the Default Domain Policy
+      3. Navigate to: Computer Configuration > Policies > Windows Settings >
+         Security Settings > Account Policies > Password Policy
+      4. Set "Maximum password age" to 90 days or less
+      5. Run: gpupdate /force
+
+  - id: "A.8.5.4"
+    title: "Password History >= 12"
+    description: "Password history should remember at least 12 previous passwords to prevent password reuse."
+    severity: "medium"
+    powershell: |
+      (Get-ADDefaultDomainPasswordPolicy).PasswordHistoryCount
+    check:
+      operator: "greater_than_equal"
+      expected: "12"
+    remediation: |
+      1. Open Group Policy Management Console
+      2. Edit the Default Domain Policy
+      3. Navigate to: Computer Configuration > Policies > Windows Settings >
+         Security Settings > Account Policies > Password Policy
+      4. Set "Enforce password history" to 12 or more passwords
+      5. Run: gpupdate /force
+
+  - id: "A.8.5.5"
+    title: "Account Lockout Threshold Configured"
+    description: "Account lockout threshold should be set to prevent brute-force attacks. Recommended: 5 or fewer invalid attempts."
+    severity: "high"
+    powershell: |
+      (Get-ADDefaultDomainPasswordPolicy).LockoutThreshold
+    check:
+      operator: "greater_than"
+      expected: "0"
+    remediation: |
+      1. Open Group Policy Management Console
+      2. Edit the Default Domain Policy
+      3. Navigate to: Computer Configuration > Policies > Windows Settings >
+         Security Settings > Account Policies > Account Lockout Policy
+      4. Set "Account lockout threshold" to 5 invalid attempts
+      5. Set "Account lockout duration" to 30 minutes
+      6. Set "Reset account lockout counter after" to 30 minutes
+      7. Run: gpupdate /force
+
+  - id: "A.8.5.6"
+    title: "Account Lockout Duration >= 30 Minutes"
+    description: "Locked accounts should remain locked for at least 30 minutes to slow down brute-force attacks."
+    severity: "medium"
+    powershell: |
+      $policy = Get-ADDefaultDomainPasswordPolicy
+      if ($policy.LockoutDuration) { $policy.LockoutDuration.TotalMinutes } else { "0" }
+    check:
+      operator: "greater_than_equal"
+      expected: "30"
+    remediation: |
+      1. Open Group Policy Management Console
+      2. Edit the Default Domain Policy
+      3. Navigate to: Account Policies > Account Lockout Policy
+      4. Set "Account lockout duration" to 30 minutes or more
+      5. Run: gpupdate /force
+
+  - id: "A.8.5.7"
+    title: "Kerberos Ticket Max Lifetime <= 10 Hours"
+    description: "Kerberos TGT lifetime should be limited to reduce the window of attack if tickets are compromised."
+    severity: "medium"
+    powershell: |
+      (Get-ADDefaultDomainPasswordPolicy).MaxPasswordAge.Days
+      $gpo = Get-GPO -Name "Default Domain Policy"
+      [xml]$report = Get-GPOReport -Guid $gpo.Id -ReportType Xml
+      $maxTicket = $report.InnerXml -match 'MaxTicketAge'
+      if ($maxTicket) { "Configured" } else { "Default" }
+    check:
+      operator: "exists"
+      expected: ""
+    remediation: |
+      1. Open Group Policy Management Console
+      2. Edit the Default Domain Policy
+      3. Navigate to: Computer Configuration > Policies > Windows Settings >
+         Security Settings > Account Policies > Kerberos Policy
+      4. Set "Maximum lifetime for user ticket" to 10 hours
+      5. Set "Maximum lifetime for user ticket renewal" to 7 days
+      6. Run: gpupdate /force
+
+  - id: "A.8.5.8"
+    title: "Reversible Encryption Disabled"
+    description: "Storing passwords using reversible encryption should be disabled as it is equivalent to storing plaintext passwords."
+    severity: "high"
+    powershell: |
+      (Get-ADDefaultDomainPasswordPolicy).ReversibleEncryptionEnabled
+    check:
+      operator: "is_false"
+      expected: "False"
+    remediation: |
+      1. Open Group Policy Management Console
+      2. Edit the Default Domain Policy
+      3. Navigate to: Computer Configuration > Policies > Windows Settings >
+         Security Settings > Account Policies > Password Policy
+      4. Disable "Store passwords using reversible encryption"
+      5. Run: gpupdate /force
+      6. Force password reset for any accounts that had this enabled

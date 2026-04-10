@@ -1,0 +1,56 @@
+# ============================================================
+# A.8.1 - User Endpoint Devices
+# ============================================================
+# Checks GPO settings for endpoint device security in AD.
+
+control: "A.8.1"
+control_name: "User Endpoint Devices"
+
+checks:
+  - id: "A.8.1.1"
+    title: "Screen Lock Timeout GPO Configured"
+    description: "A Group Policy should enforce screen lock after a period of inactivity to prevent unauthorized access to unattended devices."
+    severity: "high"
+    powershell: |
+      $gpos = Get-GPO -All | ForEach-Object {
+        $id = $_.Id
+        [xml]$report = Get-GPOReport -Guid $id -ReportType Xml
+        $ns = @{gpo='http://www.microsoft.com/GroupPolicy/Settings'}
+        $screenLock = $report.SelectNodes("//gpo:Policy[gpo:Name='Interactive logon: Machine inactivity limit']", (New-Object System.Xml.XmlNamespaceManager($report.NameTable)).tap{$_.AddNamespace('gpo','http://www.microsoft.com/GroupPolicy/Settings')})
+        if ($screenLock.Count -gt 0) { $_.DisplayName }
+      }
+      if ($gpos) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Open Group Policy Management Console (GPMC)
+      2. Create or edit a GPO linked to the domain
+      3. Navigate to: Computer Configuration > Policies > Windows Settings > 
+         Security Settings > Local Policies > Security Options
+      4. Set "Interactive logon: Machine inactivity limit" to 900 (15 minutes)
+      5. Run: gpupdate /force
+
+  - id: "A.8.1.2"
+    title: "Removable Storage Access Controlled"
+    description: "GPO should restrict or control access to removable storage devices (USB drives, external HDDs) to prevent data exfiltration."
+    severity: "medium"
+    powershell: |
+      $result = Get-GPO -All | ForEach-Object {
+        [xml]$report = Get-GPOReport -Guid $_.Id -ReportType Xml
+        if ($report.InnerXml -match 'RemovableStorage' -or $report.InnerXml -match 'Removable Disk') {
+          $_.DisplayName
+        }
+      }
+      if ($result) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Open Group Policy Management Console
+      2. Create or edit a GPO linked to the domain
+      3. Navigate to: Computer Configuration > Policies > Administrative Templates >
+         System > Removable Storage Access
+      4. Enable: "All Removable Storage classes: Deny all access" or configure
+         individual device classes
+      5. Run: gpupdate /force

@@ -1,0 +1,47 @@
+# ============================================================
+# A.8.7 - Protection Against Malware
+# ============================================================
+# Checks antivirus/Windows Defender status via AD GPO.
+
+control: "A.8.7"
+control_name: "Protection Against Malware"
+
+checks:
+  - id: "A.8.7.1"
+    title: "Windows Defender Antivirus Enabled"
+    description: "Windows Defender or an equivalent antivirus solution should be running on the Domain Controller."
+    severity: "high"
+    powershell: |
+      $status = Get-MpComputerStatus -ErrorAction SilentlyContinue
+      if ($status) { $status.AntivirusEnabled.ToString() } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Enable Windows Defender:
+         Set-MpPreference -DisableRealtimeMonitoring $false
+      2. Update definitions:
+         Update-MpSignature
+      3. If using third-party AV, ensure it is properly installed and running
+      4. Deploy AV settings via GPO for all DCs
+
+  - id: "A.8.7.2"
+    title: "Antivirus Definitions Up-to-Date"
+    description: "Antivirus signature definitions should be up-to-date (within the last 7 days) to protect against latest threats."
+    severity: "high"
+    powershell: |
+      $status = Get-MpComputerStatus -ErrorAction SilentlyContinue
+      if ($status) {
+        $age = (Get-Date) - $status.AntivirusSignatureLastUpdated
+        if ($age.Days -le 7) { "True" } else { "False" }
+      } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Update virus definitions:
+         Update-MpSignature
+      2. Configure automatic updates via GPO:
+         Computer Configuration > Administrative Templates > 
+         Windows Components > Microsoft Defender Antivirus > Security Intelligence Updates
+      3. Set "Define the number of days before spyware definitions are out of date" to 7

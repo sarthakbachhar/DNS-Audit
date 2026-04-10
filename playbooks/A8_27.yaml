@@ -1,0 +1,60 @@
+# ============================================================
+# A.8.27 - Secure System Architecture and Engineering
+# ============================================================
+# Checks forest/domain functional levels and trust relationships.
+
+control: "A.8.27"
+control_name: "Secure System Architecture and Engineering Principles"
+
+checks:
+  - id: "A.8.27.1"
+    title: "Domain Functional Level Current"
+    description: "The domain functional level should be at Windows Server 2016 or higher to access the latest security features."
+    severity: "medium"
+    powershell: |
+      (Get-ADDomain).DomainMode.ToString()
+    check:
+      operator: "not_equals"
+      expected: "Windows2008Domain"
+    remediation: |
+      1. Check current functional level:
+         Get-ADDomain | Select DomainMode
+      2. Raise the domain functional level:
+         Set-ADDomainMode -DomainMode Windows2016Domain
+      3. Prerequisites: All DCs must run the target Windows Server version
+      4. WARNING: This operation is irreversible
+
+  - id: "A.8.27.2"
+    title: "Forest Functional Level Current"
+    description: "The forest functional level should be at Windows Server 2016 or higher."
+    severity: "medium"
+    powershell: |
+      (Get-ADForest).ForestMode.ToString()
+    check:
+      operator: "not_equals"
+      expected: "Windows2008Forest"
+    remediation: |
+      1. Check current functional level:
+         Get-ADForest | Select ForestMode
+      2. Raise the forest functional level:
+         Set-ADForestMode -ForestMode Windows2016Forest
+      3. Prerequisites: Domain functional level must be raised first
+      4. WARNING: This operation is irreversible
+
+  - id: "A.8.27.3"
+    title: "Trust Relationships Reviewed"
+    description: "AD trust relationships should be reviewed to ensure no unintended external trusts exist."
+    severity: "high"
+    powershell: |
+      $trusts = Get-ADTrust -Filter *
+      if ($trusts) { ($trusts | Measure-Object).Count.ToString() + " trusts found" } else { "No trusts" }
+    check:
+      operator: "exists"
+      expected: ""
+    remediation: |
+      1. Review all trust relationships:
+         Get-ADTrust -Filter * | Select Name,Direction,TrustType,ForestTransitive
+      2. Remove unnecessary trusts:
+         Remove-ADTrust -Identity "untrusted.domain.com"
+      3. Ensure remaining trusts use Selective Authentication where appropriate
+      4. Validate trust with: Test-ADTrust -Identity "partner.domain.com"

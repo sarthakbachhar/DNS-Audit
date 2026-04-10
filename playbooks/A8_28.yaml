@@ -1,0 +1,48 @@
+# ============================================================
+# A.8.28 - Secure Coding
+# ============================================================
+# Checks PowerShell execution policies and script signing.
+
+control: "A.8.28"
+control_name: "Secure Coding"
+
+checks:
+  - id: "A.8.28.1"
+    title: "PowerShell Execution Policy Restricted"
+    description: "PowerShell execution policy should require signed scripts or be restricted to prevent unauthorized script execution."
+    severity: "medium"
+    powershell: |
+      Get-ExecutionPolicy
+    check:
+      operator: "not_equals"
+      expected: "Unrestricted"
+    remediation: |
+      1. Set execution policy to AllSigned or RemoteSigned:
+         Set-ExecutionPolicy AllSigned -Scope LocalMachine
+      2. Configure via GPO:
+         Computer Configuration > Administrative Templates > Windows Components >
+         Windows PowerShell > Turn on Script Execution
+      3. Set to "Allow only signed scripts"
+      4. Sign your administrative scripts with a code signing certificate
+
+  - id: "A.8.28.2"
+    title: "PowerShell Constrained Language Mode Available"
+    description: "PowerShell Constrained Language Mode should be available for non-admin users to limit attack surface."
+    severity: "low"
+    powershell: |
+      $applocker = Get-GPO -All | ForEach-Object {
+        [xml]$report = Get-GPOReport -Guid $_.Id -ReportType Xml
+        if ($report.InnerXml -match 'AppLocker' -or $report.InnerXml -match 'ConstrainedLanguage') {
+          $_.DisplayName
+        }
+      }
+      if ($applocker) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Deploy AppLocker policies (which automatically enable Constrained Language Mode)
+      2. Configure via GPO:
+         Computer Configuration > Windows Settings > Security Settings >
+         Application Control Policies > AppLocker
+      3. This restricts non-admin PowerShell to safe operations

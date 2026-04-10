@@ -1,0 +1,46 @@
+# ============================================================
+# A.8.32 - Change Management
+# ============================================================
+# Checks GPO versioning and AD change tracking.
+
+control: "A.8.32"
+control_name: "Change Management"
+
+checks:
+  - id: "A.8.32.1"
+    title: "GPO Versioning Active"
+    description: "Group Policy Objects should be versioned to track changes and support rollback."
+    severity: "medium"
+    powershell: |
+      $gpos = Get-GPO -All | Where-Object { $_.ModificationTime -gt (Get-Date).AddDays(-365) }
+      "$($gpos.Count) GPOs modified in last 365 days"
+    check:
+      operator: "exists"
+      expected: ""
+    remediation: |
+      1. Review GPO modification history:
+         Get-GPO -All | Select DisplayName,ModificationTime,@{N='Version';E={"User: $($_.UserVersion), Computer: $($_.ComputerVersion)"}} | Sort ModificationTime -Descending
+      2. Implement a GPO change management process
+      3. Back up GPOs regularly:
+         Backup-GPO -All -Path "C:\GPOBackups"
+      4. Document all GPO changes in a change log
+
+  - id: "A.8.32.2"
+    title: "AD Change Notifications Configured"
+    description: "AD replication change notifications should be configured to promptly propagate changes."
+    severity: "low"
+    powershell: |
+      $siteLinks = Get-ADReplicationSiteLink -Filter *
+      if ($siteLinks) { 
+        $withNotify = $siteLinks | Where-Object { $_.Options -band 1 }
+        if ($withNotify) { "True" } else { "Default" }
+      } else { "No site links" }
+    check:
+      operator: "exists"
+      expected: ""
+    remediation: |
+      1. Enable change notification on site links:
+         Set-ADReplicationSiteLink -Identity "DefaultSiteLink" -Replace @{Options=1}
+      2. This enables instant replication for urgent changes
+      3. Review replication schedule:
+         Get-ADReplicationSiteLink -Filter * | Select Name,ReplicationFrequencyInMinutes

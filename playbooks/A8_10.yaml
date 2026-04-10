@@ -1,0 +1,40 @@
+# ============================================================
+# A.8.10 - Information Deletion
+# ============================================================
+# Checks AD Recycle Bin and tombstone settings.
+
+control: "A.8.10"
+control_name: "Information Deletion"
+
+checks:
+  - id: "A.8.10.1"
+    title: "AD Recycle Bin Enabled"
+    description: "The Active Directory Recycle Bin should be enabled to allow recovery of accidentally deleted AD objects."
+    severity: "high"
+    powershell: |
+      $recycleBin = Get-ADOptionalFeature -Filter {Name -eq 'Recycle Bin Feature'}
+      if ($recycleBin.EnabledScopes.Count -gt 0) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Enable AD Recycle Bin (requires Forest Functional Level 2008 R2+):
+         Enable-ADOptionalFeature -Identity 'Recycle Bin Feature' -Scope ForestOrConfigurationSet -Target (Get-ADForest).Name
+      2. WARNING: This action is irreversible
+      3. Verify: Get-ADOptionalFeature -Filter {Name -eq 'Recycle Bin Feature'}
+
+  - id: "A.8.10.2"
+    title: "Tombstone Lifetime Adequate"
+    description: "The tombstone lifetime should be at least 180 days to ensure proper AD replication and object recovery."
+    severity: "medium"
+    powershell: |
+      $config = Get-ADObject "CN=Directory Service,CN=Windows NT,CN=Services,$(Get-ADRootDSE | Select-Object -ExpandProperty configurationNamingContext)" -Properties tombstoneLifetime
+      $config.tombstoneLifetime
+    check:
+      operator: "greater_than_equal"
+      expected: "180"
+    remediation: |
+      1. Set tombstone lifetime:
+         Set-ADObject "CN=Directory Service,CN=Windows NT,CN=Services,$(Get-ADRootDSE | Select-Object -ExpandProperty configurationNamingContext)" -Replace @{tombstoneLifetime=180}
+      2. Default is 60 days (Windows Server 2003) or 180 days (2003 SP1+)
+      3. Ensure this matches your backup retention requirements

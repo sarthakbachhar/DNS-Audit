@@ -1,0 +1,69 @@
+# ============================================================
+# A.8.18 - Use of Privileged Utility Programs
+# ============================================================
+# Checks PowerShell security and privileged utility controls.
+
+control: "A.8.18"
+control_name: "Use of Privileged Utility Programs"
+
+checks:
+  - id: "A.8.18.1"
+    title: "PowerShell Script Block Logging Enabled"
+    description: "PowerShell Script Block Logging should be enabled to capture all PowerShell commands executed on the system."
+    severity: "high"
+    powershell: |
+      $regPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging'
+      $value = Get-ItemProperty -Path $regPath -Name 'EnableScriptBlockLogging' -ErrorAction SilentlyContinue
+      if ($value -and $value.EnableScriptBlockLogging -eq 1) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Configure via GPO:
+         Computer Configuration > Administrative Templates > Windows Components >
+         Windows PowerShell > Turn on PowerShell Script Block Logging
+      2. Enable the policy
+      3. Or via registry:
+         New-Item -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging' -Force
+         Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging' -Name 'EnableScriptBlockLogging' -Value 1
+      4. Run: gpupdate /force
+
+  - id: "A.8.18.2"
+    title: "PowerShell Transcription Enabled"
+    description: "PowerShell Transcription should be enabled to create a record of all PowerShell sessions."
+    severity: "medium"
+    powershell: |
+      $regPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\Transcription'
+      $value = Get-ItemProperty -Path $regPath -Name 'EnableTranscripting' -ErrorAction SilentlyContinue
+      if ($value -and $value.EnableTranscripting -eq 1) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Configure via GPO:
+         Computer Configuration > Administrative Templates > Windows Components >
+         Windows PowerShell > Turn on PowerShell Transcription
+      2. Set output directory to a secured location
+      3. Or via registry:
+         New-Item -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\Transcription' -Force
+         Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\Transcription' -Name 'EnableTranscripting' -Value 1
+      4. Run: gpupdate /force
+
+  - id: "A.8.18.3"
+    title: "PowerShell Module Logging Enabled"
+    description: "PowerShell Module Logging should be enabled to track which PowerShell modules are used."
+    severity: "medium"
+    powershell: |
+      $regPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ModuleLogging'
+      $value = Get-ItemProperty -Path $regPath -Name 'EnableModuleLogging' -ErrorAction SilentlyContinue
+      if ($value -and $value.EnableModuleLogging -eq 1) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Configure via GPO:
+         Computer Configuration > Administrative Templates > Windows Components >
+         Windows PowerShell > Turn on Module Logging
+      2. Add modules to log (use * for all):
+         Module Names: *
+      3. Run: gpupdate /force

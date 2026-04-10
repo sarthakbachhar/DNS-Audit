@@ -1,0 +1,2807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISO 27001 Audit Report - DC01</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: 'Inter', -apple-system, sans-serif;
+        background: #ffffff;
+        color: #1e293b;
+        line-height: 1.6;
+        font-size: 11pt;
+    }
+
+    .report-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 50px;
+    }
+
+    /* Header */
+    .report-header {
+        border-bottom: 3px solid #1e40af;
+        padding-bottom: 24px;
+        margin-bottom: 32px;
+    }
+    .report-header h1 {
+        font-size: 24pt;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 4px;
+    }
+    .report-header .subtitle {
+        font-size: 13pt;
+        color: #64748b;
+        font-weight: 400;
+    }
+    .report-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        margin-top: 16px;
+        font-size: 9.5pt;
+        color: #475569;
+    }
+    .report-meta span { display: flex; align-items: center; gap: 6px; }
+    .report-meta strong { color: #1e293b; }
+
+    /* Summary Cards */
+    .summary-section {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 32px;
+    }
+    .summary-card {
+        flex: 1;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+    }
+    .summary-card.total { background: #f1f5f9; }
+    .summary-card.passed { background: #f0fdf4; border-color: #bbf7d0; }
+    .summary-card.failed { background: #fef2f2; border-color: #fecaca; }
+    .summary-card.score { background: #eff6ff; border-color: #bfdbfe; }
+    .summary-card .number {
+        font-size: 28pt;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .summary-card.total .number { color: #334155; }
+    .summary-card.passed .number { color: #16a34a; }
+    .summary-card.failed .number { color: #dc2626; }
+    .summary-card.score .number { color: #2563eb; }
+    .summary-card .label {
+        font-size: 9pt;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin-top: 4px;
+    }
+
+    /* Severity Summary */
+    .severity-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 32px;
+        font-size: 10pt;
+    }
+    .severity-table th {
+        background: #f8fafc;
+        padding: 10px 16px;
+        text-align: left;
+        font-weight: 600;
+        color: #334155;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .severity-table td {
+        padding: 10px 16px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .severity-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 4px;
+        font-size: 8.5pt;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .severity-high { background: #fef2f2; color: #991b1b; }
+    .severity-medium { background: #fffbeb; color: #92400e; }
+    .severity-low { background: #f0fdf4; color: #166534; }
+
+    /* Control Sections */
+    .control-section {
+        margin-bottom: 28px;
+        page-break-inside: avoid;
+    }
+    .control-header {
+        background: #f8fafc;
+        padding: 12px 20px;
+        border-left: 4px solid #1e40af;
+        margin-bottom: 12px;
+        border-radius: 0 6px 6px 0;
+    }
+    .control-header h2 {
+        font-size: 13pt;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    /* Check Results */
+    .check-result {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
+    .check-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 20px;
+        background: #ffffff;
+    }
+    .status-badge {
+        display: inline-block;
+        padding: 3px 12px;
+        border-radius: 4px;
+        font-size: 8.5pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        flex-shrink: 0;
+    }
+    .status-pass { background: #dcfce7; color: #15803d; }
+    .status-fail { background: #fee2e2; color: #b91c1c; }
+    .status-error { background: #fef3c7; color: #92400e; }
+    .check-title {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 10.5pt;
+    }
+    .check-id {
+        margin-left: auto;
+        font-size: 9pt;
+        color: #94a3b8;
+        font-weight: 500;
+        flex-shrink: 0;
+    }
+    .check-details {
+        padding: 12px 20px;
+        background: #fafbfc;
+        border-top: 1px solid #f1f5f9;
+        font-size: 9.5pt;
+    }
+    .check-details p {
+        margin-bottom: 8px;
+        color: #475569;
+    }
+    .detail-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 4px;
+    }
+    .detail-label {
+        font-weight: 600;
+        color: #334155;
+        min-width: 100px;
+    }
+    .detail-value { color: #475569; }
+    .remediation {
+        margin-top: 12px;
+        padding: 12px 16px;
+        background: #fff7ed;
+        border-left: 3px solid #f97316;
+        border-radius: 0 6px 6px 0;
+        font-size: 9pt;
+    }
+    .remediation-title {
+        font-weight: 700;
+        color: #c2410c;
+        margin-bottom: 6px;
+        font-size: 9.5pt;
+    }
+    .remediation pre {
+        white-space: pre-wrap;
+        font-family: 'Courier New', monospace;
+        font-size: 8.5pt;
+        color: #44403c;
+        line-height: 1.5;
+    }
+
+    /* Footer */
+    .report-footer {
+        margin-top: 40px;
+        padding-top: 16px;
+        border-top: 1px solid #e2e8f0;
+        font-size: 8.5pt;
+        color: #94a3b8;
+        text-align: center;
+    }
+
+    @media print {
+        body { font-size: 10pt; }
+        .report-container { padding: 20px; }
+        .control-section { page-break-inside: avoid; }
+        .check-result { page-break-inside: avoid; }
+    }
+</style>
+</head>
+<body>
+<div class="report-container">
+
+    <!-- Header -->
+    <div class="report-header">
+        <h1>ISO 27001 Audit Report</h1>
+        <div class="subtitle">Annex A Section 8 — Technology Controls</div>
+        <div class="report-meta">
+            <span><strong>Host:</strong> DC01</span>
+            <span><strong>OS:</strong> Microsoft Windows Server 2022 Standard Evaluation</span>
+            <span><strong>Collected:</strong> 2026-03-31 13:20:10</span>
+            <span><strong>Report Generated:</strong> 2026-03-31T13:20:10</span>
+        </div>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="summary-section">
+        <div class="summary-card total">
+            <div class="number">87</div>
+            <div class="label">Total Checks</div>
+        </div>
+        <div class="summary-card passed">
+            <div class="number">10</div>
+            <div class="label">Passed</div>
+        </div>
+        <div class="summary-card failed">
+            <div class="number">13</div>
+            <div class="label">Failed</div>
+        </div>
+        <div class="summary-card score">
+            <div class="number">11.5%</div>
+            <div class="label">Compliance</div>
+        </div>
+    </div>
+
+    <!-- Severity Summary -->
+    <table class="severity-table">
+        <thead>
+            <tr>
+                <th>Severity</th>
+                <th>Passed</th>
+                <th>Failed</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><span class="severity-badge severity-high">HIGH</span></td>
+                <td>4</td>
+                <td>6</td>
+                <td>10</td>
+            </tr>
+            <tr>
+                <td><span class="severity-badge severity-medium">MEDIUM</span></td>
+                <td>6</td>
+                <td>7</td>
+                <td>13</td>
+            </tr>
+            <tr>
+                <td><span class="severity-badge severity-low">LOW</span></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Detailed Results by Control -->
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.1 — User Endpoint Devices</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Screen Lock Timeout GPO Configured</span>
+                <span class="check-id">A.8.1.1</span>
+            </div>
+            <div class="check-details">
+                <p>A Group Policy should enforce screen lock after a period of inactivity to prevent unauthorized access to unattended devices.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: Method invocation failed because [System.String] does not contain a method named 'tap'.</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">Removable Storage Access Controlled</span>
+                <span class="check-id">A.8.1.2</span>
+            </div>
+            <div class="check-details">
+                <p>GPO should restrict or control access to removable storage devices (USB drives, external HDDs) to prevent data exfiltration.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">False</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Open Group Policy Management Console
+2. Create or edit a GPO linked to the domain
+3. Navigate to: Computer Configuration > Policies > Administrative Templates >
+   System > Removable Storage Access
+4. Enable: "All Removable Storage classes: Deny all access" or configure
+   individual device classes
+5. Run: gpupdate /force</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.10 — Information Deletion</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">AD Recycle Bin Enabled</span>
+                <span class="check-id">A.8.10.1</span>
+            </div>
+            <div class="check-details">
+                <p>The Active Directory Recycle Bin should be enabled to allow recovery of accidentally deleted AD objects.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">False</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Enable AD Recycle Bin (requires Forest Functional Level 2008 R2+):
+   Enable-ADOptionalFeature -Identity 'Recycle Bin Feature' -Scope ForestOrConfigurationSet -Target (Get-ADForest).Name
+2. WARNING: This action is irreversible
+3. Verify: Get-ADOptionalFeature -Filter {Name -eq 'Recycle Bin Feature'}</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">Tombstone Lifetime Adequate</span>
+                <span class="check-id">A.8.10.2</span>
+            </div>
+            <div class="check-details">
+                <p>The tombstone lifetime should be at least 180 days to ensure proper AD replication and object recovery.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">180</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">180</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.11 — Data Masking</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">Confidential Attributes Protected</span>
+                <span class="check-id">A.8.11.1</span>
+            </div>
+            <div class="check-details">
+                <p>Sensitive AD attributes should have ACLs restricting who can read them, protecting data like personal information.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">False</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">Fine-Grained Password Policies Exist</span>
+                <span class="check-id">A.8.11.2</span>
+            </div>
+            <div class="check-details">
+                <p>Fine-Grained Password Policies (FGPP) should be defined for groups requiring stricter controls (admins, service accounts).</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">1</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">0</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Create a Fine-Grained Password Policy:
+   New-ADFineGrainedPasswordPolicy -Name "AdminPasswordPolicy" -Precedence 10 -ComplexityEnabled $true -MinPasswordLength 16 -MaxPasswordAge "60.00:00:00" -PasswordHistoryCount 24
+2. Apply to a group:
+   Add-ADFineGrainedPasswordPolicySubject -Identity "AdminPasswordPolicy" -Subjects "Domain Admins"
+3. Verify: Get-ADFineGrainedPasswordPolicy -Filter *</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.12 — Data Leakage Prevention</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">USB Storage Restriction GPO Configured</span>
+                <span class="check-id">A.8.12.1</span>
+            </div>
+            <div class="check-details">
+                <p>A GPO should restrict removable storage devices to prevent data exfiltration via USB drives.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">False</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Create a GPO for removable storage:
+   Computer Configuration > Administrative Templates > System > Removable Storage Access
+2. Enable "All Removable Storage classes: Deny all access"
+3. Or selectively deny: "Removable Disks: Deny write access"
+4. Link the GPO to the appropriate OUs
+5. Run: gpupdate /force</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">BitLocker Policy Configured</span>
+                <span class="check-id">A.8.12.2</span>
+            </div>
+            <div class="check-details">
+                <p>BitLocker drive encryption should be enforced via GPO to protect data on endpoint devices.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">False</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Create a GPO for BitLocker:
+   Computer Configuration > Administrative Templates > Windows Components > BitLocker Drive Encryption
+2. Enable "Require additional authentication at startup"
+3. Configure recovery key storage in AD:
+   Enable "Store BitLocker recovery information in Active Directory"
+4. Link GPO to computer OUs</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.13 — Information Backup</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">AD System State Backup Recent</span>
+                <span class="check-id">A.8.13.1</span>
+            </div>
+            <div class="check-details">
+                <p>Active Directory system state should be backed up regularly. Last backup should be within 30 days.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">False</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: The term 'Get-WBSummary' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">SYSVOL Replication Healthy</span>
+                <span class="check-id">A.8.13.2</span>
+            </div>
+            <div class="check-details">
+                <p>SYSVOL replication (DFSR or FRS) should be functioning correctly for Group Policy distribution.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.14 — Redundancy of Information Processing Facilities</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">Multiple Domain Controllers Exist</span>
+                <span class="check-id">A.8.14.1</span>
+            </div>
+            <div class="check-details">
+                <p>At least two Domain Controllers should exist for redundancy and fault tolerance.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">2</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">1</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Deploy an additional Domain Controller:
+   Install-WindowsFeature AD-Domain-Services
+   Install-ADDSDomainController -DomainName "domain.com"
+2. Ensure DCs are in different physical locations if possible
+3. Verify replication after deployment: repadmin /replsummary</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">FSMO Roles Distributed</span>
+                <span class="check-id">A.8.14.2</span>
+            </div>
+            <div class="check-details">
+                <p>FSMO (Flexible Single Master Operations) roles should be reviewed to ensure they are on reachable Domain Controllers.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">5 roles on 1 DC(s)</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">AD Sites and Subnets Configured</span>
+                <span class="check-id">A.8.14.3</span>
+            </div>
+            <div class="check-details">
+                <p>AD Sites and Services should have properly configured sites and subnets for optimized replication and client authentication.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">Sites:</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Sites: 1, Subnets: 0</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.15 — Logging</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">Audit Policy - Account Logon Events</span>
+                <span class="check-id">A.8.15.1</span>
+            </div>
+            <div class="check-details">
+                <p>Audit policy should log both success and failure for account logon events to track authentication activity.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">False</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Configure via GPO:
+   Computer Configuration > Policies > Windows Settings > Security Settings >
+   Advanced Audit Policy Configuration > Audit Policies > Account Logon
+2. Enable "Audit Credential Validation" for Success and Failure
+3. Or via command line:
+   auditpol /set /subcategory:"Credential Validation" /success:enable /failure:enable
+4. Run: gpupdate /force</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">Audit Policy - Account Management</span>
+                <span class="check-id">A.8.15.2</span>
+            </div>
+            <div class="check-details">
+                <p>User and group account management events should be audited to track privilege changes.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">False</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Configure via GPO:
+   Advanced Audit Policy Configuration > Account Management
+2. Enable "Audit User Account Management" for Success and Failure
+3. Also enable "Audit Security Group Management"
+4. Run: gpupdate /force</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">Audit Policy - Directory Service Access</span>
+                <span class="check-id">A.8.15.3</span>
+            </div>
+            <div class="check-details">
+                <p>Directory Service access should be audited to track AD object access and modifications.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">Audit Policy - Logon/Logoff Events</span>
+                <span class="check-id">A.8.15.4</span>
+            </div>
+            <div class="check-details">
+                <p>Logon and logoff events should be audited to track user access patterns and detect unauthorized access.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">Audit Policy - Policy Changes</span>
+                <span class="check-id">A.8.15.5</span>
+            </div>
+            <div class="check-details">
+                <p>Policy change events should be audited to detect unauthorized modifications to security policies.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.16 — Monitoring Activities</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">Security Event Log Size Adequate</span>
+                <span class="check-id">A.8.16.1</span>
+            </div>
+            <div class="check-details">
+                <p>The Security event log should have a maximum size of at least 1GB to retain sufficient audit history.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">1024</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">128</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Configure via GPO:
+   Computer Configuration > Administrative Templates > Windows Components >
+   Event Log Service > Security > Maximum Log Size
+2. Set to at least 1048576 KB (1 GB)
+3. Or via PowerShell:
+   wevtutil sl Security /ms:1073741824
+4. Configure log retention to "Archive when full"</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">Windows Event Forwarding Configured</span>
+                <span class="check-id">A.8.16.2</span>
+            </div>
+            <div class="check-details">
+                <p>Event forwarding should be configured to centralize security logs from all DCs and critical servers.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">False</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Partial</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.17 — Clock Synchronization</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">W32Time Service Running</span>
+                <span class="check-id">A.8.17.1</span>
+            </div>
+            <div class="check-details">
+                <p>The Windows Time service must be running on Domain Controllers for Kerberos authentication and accurate logging.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">Running</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Running</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">NTP Source Configured</span>
+                <span class="check-id">A.8.17.2</span>
+            </div>
+            <div class="check-details">
+                <p>The PDC Emulator should be configured to sync with an external NTP source for accurate time.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">False</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Configure external NTP source on PDC Emulator:
+   w32tm /config /manualpeerlist:"time.windows.com,0x1" /syncfromflags:manual /reliable:yes /update
+2. Restart the time service:
+   Restart-Service W32Time
+3. Force sync:
+   w32tm /resync /force
+4. Verify: w32tm /query /source</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.18 — Use of Privileged Utility Programs</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">PowerShell Script Block Logging Enabled</span>
+                <span class="check-id">A.8.18.1</span>
+            </div>
+            <div class="check-details">
+                <p>PowerShell Script Block Logging should be enabled to capture all PowerShell commands executed on the system.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">False</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Configure via GPO:
+   Computer Configuration > Administrative Templates > Windows Components >
+   Windows PowerShell > Turn on PowerShell Script Block Logging
+2. Enable the policy
+3. Or via registry:
+   New-Item -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging' -Force
+   Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging' -Name 'EnableScriptBlockLogging' -Value 1
+4. Run: gpupdate /force</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">PowerShell Transcription Enabled</span>
+                <span class="check-id">A.8.18.2</span>
+            </div>
+            <div class="check-details">
+                <p>PowerShell Transcription should be enabled to create a record of all PowerShell sessions.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">False</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Configure via GPO:
+   Computer Configuration > Administrative Templates > Windows Components >
+   Windows PowerShell > Turn on PowerShell Transcription
+2. Set output directory to a secured location
+3. Or via registry:
+   New-Item -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\Transcription' -Force
+   Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\Transcription' -Name 'EnableTranscripting' -Value 1
+4. Run: gpupdate /force</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">PowerShell Module Logging Enabled</span>
+                <span class="check-id">A.8.18.3</span>
+            </div>
+            <div class="check-details">
+                <p>PowerShell Module Logging should be enabled to track which PowerShell modules are used.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">False</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Configure via GPO:
+   Computer Configuration > Administrative Templates > Windows Components >
+   Windows PowerShell > Turn on Module Logging
+2. Add modules to log (use * for all):
+   Module Names: *
+3. Run: gpupdate /force</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.19 — Installation of Software on Operational Systems</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">AppLocker or Software Restriction Policy Defined</span>
+                <span class="check-id">A.8.19.1</span>
+            </div>
+            <div class="check-details">
+                <p>AppLocker or Software Restriction Policies should be configured to control which applications can run.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: ('Connection aborted.', ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Application Identity Service Running</span>
+                <span class="check-id">A.8.19.2</span>
+            </div>
+            <div class="check-details">
+                <p>The Application Identity service must be running for AppLocker policies to be enforced.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-low">LOW</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">Running</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A62031CCD0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.2 — Privileged Access Rights</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Domain Admins Group Membership Limited</span>
+                <span class="check-id">A.8.2.1</span>
+            </div>
+            <div class="check-details">
+                <p>The Domain Admins group should have minimal members. Excessive privileged accounts increase the attack surface.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">5</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A62031E990>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Enterprise Admins Group Membership Limited</span>
+                <span class="check-id">A.8.2.2</span>
+            </div>
+            <div class="check-details">
+                <p>The Enterprise Admins group should have very few members, ideally only used temporarily for forest-level operations.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">2</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6202B7CE0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Schema Admins Group Membership Limited</span>
+                <span class="check-id">A.8.2.3</span>
+            </div>
+            <div class="check-details">
+                <p>The Schema Admins group should be empty during normal operations and populated only when schema changes are needed.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">1</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203C0050>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">AdminSDHolder Protected Accounts Reviewed</span>
+                <span class="check-id">A.8.2.4</span>
+            </div>
+            <div class="check-details">
+                <p>The AdminCount attribute flags accounts protected by AdminSDHolder. These should be reviewed to ensure no orphaned protected accounts exist.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">15</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A62042EE70>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Built-in Administrator Account Renamed</span>
+                <span class="check-id">A.8.2.5</span>
+            </div>
+            <div class="check-details">
+                <p>The built-in Administrator account (RID 500) should be renamed to reduce targeting by attackers.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BA580>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.20 — Network Controls</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Windows Firewall - Domain Profile Enabled</span>
+                <span class="check-id">A.8.20.1</span>
+            </div>
+            <div class="check-details">
+                <p>The Windows Firewall Domain profile should be enabled on Domain Controllers.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BA360>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Windows Firewall - Private Profile Enabled</span>
+                <span class="check-id">A.8.20.2</span>
+            </div>
+            <div class="check-details">
+                <p>The Windows Firewall Private profile should be enabled for additional security layers.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B97B0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Windows Firewall - Public Profile Enabled</span>
+                <span class="check-id">A.8.20.3</span>
+            </div>
+            <div class="check-details">
+                <p>The Windows Firewall Public profile should be enabled and restrictive.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B9370>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.21 — Security of Network Services</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">LDAP Server Signing Required</span>
+                <span class="check-id">A.8.21.1</span>
+            </div>
+            <div class="check-details">
+                <p>LDAP server signing should be required to prevent LDAP relay attacks and ensure data integrity.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B8F30>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">SMB Signing Required</span>
+                <span class="check-id">A.8.21.2</span>
+            </div>
+            <div class="check-details">
+                <p>SMB signing should be required on Domain Controllers to prevent man-in-the-middle attacks on SMB communications.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BABE0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">LDAP Channel Binding Configured</span>
+                <span class="check-id">A.8.21.3</span>
+            </div>
+            <div class="check-details">
+                <p>LDAP channel binding should be configured to mitigate LDAP relay attacks.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BB130>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.22 — Segregation in Networks</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">AD Sites Configured</span>
+                <span class="check-id">A.8.22.1</span>
+            </div>
+            <div class="check-details">
+                <p>Active Directory Sites should be configured to represent physical network topology for replication optimization.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">1</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BB350>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">AD Subnets Defined</span>
+                <span class="check-id">A.8.22.2</span>
+            </div>
+            <div class="check-details">
+                <p>AD subnets should be defined and associated with sites to ensure clients authenticate against the nearest DC.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">1</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BAE00>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.23 — Web Filtering</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">DNS Filtering or Proxy GPO Configured</span>
+                <span class="check-id">A.8.23.1</span>
+            </div>
+            <div class="check-details">
+                <p>A web filtering solution (DNS-based, proxy, or URL filtering) should be configured via GPO.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B88D0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">DNS Forwarders Configured Securely</span>
+                <span class="check-id">A.8.23.2</span>
+            </div>
+            <div class="check-details">
+                <p>DNS forwarders should point to secure, trusted DNS servers, not arbitrary public DNS.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-low">LOW</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B9040>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.24 — Use of Cryptography</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">AES Kerberos Encryption Supported</span>
+                <span class="check-id">A.8.24.1</span>
+            </div>
+            <div class="check-details">
+                <p>Domain Controllers should support AES (128/256) Kerberos encryption types and DES should be disabled.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B98C0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">TLS 1.2 Enabled</span>
+                <span class="check-id">A.8.24.2</span>
+            </div>
+            <div class="check-details">
+                <p>TLS 1.2 should be enabled on Domain Controllers for secure communications.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B9E10>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">SSL 3.0 Disabled</span>
+                <span class="check-id">A.8.24.3</span>
+            </div>
+            <div class="check-details">
+                <p>SSL 3.0 should be disabled as it has known vulnerabilities (POODLE attack).</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">False</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BA140>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.25 — Secure Development Lifecycle</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">AD Certificate Services Templates Secured</span>
+                <span class="check-id">A.8.25.1</span>
+            </div>
+            <div class="check-details">
+                <p>If AD Certificate Services (ADCS) is deployed, certificate templates should have restricted enrollment permissions.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B9AE0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.26 — Application Security Requirements</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Service Accounts Use Managed Service Accounts</span>
+                <span class="check-id">A.8.26.1</span>
+            </div>
+            <div class="check-details">
+                <p>Applications should use Group Managed Service Accounts (gMSA) instead of regular user accounts for automatic password management.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">1</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BA360>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Service Account Passwords Not Set to Never Expire</span>
+                <span class="check-id">A.8.26.2</span>
+            </div>
+            <div class="check-details">
+                <p>Service accounts with 'Password Never Expires' should be minimized or use gMSA instead.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">10</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B97B0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.27 — Secure System Architecture and Engineering Principles</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Domain Functional Level Current</span>
+                <span class="check-id">A.8.27.1</span>
+            </div>
+            <div class="check-details">
+                <p>The domain functional level should be at Windows Server 2016 or higher to access the latest security features.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">Windows2008Domain</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B9370>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Forest Functional Level Current</span>
+                <span class="check-id">A.8.27.2</span>
+            </div>
+            <div class="check-details">
+                <p>The forest functional level should be at Windows Server 2016 or higher.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">Windows2008Forest</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B8F30>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Trust Relationships Reviewed</span>
+                <span class="check-id">A.8.27.3</span>
+            </div>
+            <div class="check-details">
+                <p>AD trust relationships should be reviewed to ensure no unintended external trusts exist.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BABE0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.28 — Secure Coding</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">PowerShell Execution Policy Restricted</span>
+                <span class="check-id">A.8.28.1</span>
+            </div>
+            <div class="check-details">
+                <p>PowerShell execution policy should require signed scripts or be restricted to prevent unauthorized script execution.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">Unrestricted</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BB570>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">PowerShell Constrained Language Mode Available</span>
+                <span class="check-id">A.8.28.2</span>
+            </div>
+            <div class="check-details">
+                <p>PowerShell Constrained Language Mode should be available for non-admin users to limit attack surface.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-low">LOW</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BB130>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.29 — Security Testing in Development and Acceptance</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">No Inactive User Accounts (90+ Days)</span>
+                <span class="check-id">A.8.29.1</span>
+            </div>
+            <div class="check-details">
+                <p>User accounts that have not logged in for 90+ days should be disabled or removed.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">10</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BB240>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">No Stale Computer Accounts (90+ Days)</span>
+                <span class="check-id">A.8.29.2</span>
+            </div>
+            <div class="check-details">
+                <p>Computer accounts that have not authenticated in 90+ days may indicate decommissioned machines and should be cleaned up.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-low">LOW</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">20</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B88D0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Excessive Group Nesting Detected</span>
+                <span class="check-id">A.8.29.3</span>
+            </div>
+            <div class="check-details">
+                <p>Deeply nested group membership (groups within groups) can lead to unintended privilege escalation and should be minimized.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-low">LOW</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">5</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B9590>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.3 — Information Access Restriction</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Organizational Units (OU) Structure Exists</span>
+                <span class="check-id">A.8.3.1</span>
+            </div>
+            <div class="check-details">
+                <p>AD should have a structured OU hierarchy to enable proper access control delegation and Group Policy application.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">3</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B98C0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">OU Delegation Properly Configured</span>
+                <span class="check-id">A.8.3.2</span>
+            </div>
+            <div class="check-details">
+                <p>Administrative delegation should be configured at the OU level to enforce principle of least privilege.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BA7A0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.30 — Outsourced Development</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">External Trust Relationships Reviewed</span>
+                <span class="check-id">A.8.30.1</span>
+            </div>
+            <div class="check-details">
+                <p>External trust relationships allow authentication across domains and should be carefully reviewed.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BA690>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Foreign Security Principals Reviewed</span>
+                <span class="check-id">A.8.30.2</span>
+            </div>
+            <div class="check-details">
+                <p>Foreign Security Principals (accounts from trusted domains) should be reviewed and limited.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">20</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BA140>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.31 — Separation of Development, Test and Production Environments</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Separate OUs for Different Environments</span>
+                <span class="check-id">A.8.31.1</span>
+            </div>
+            <div class="check-details">
+                <p>Separate Organizational Units should exist for development, test, and production environments.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">None found</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B9F20>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Dev/Test Groups Separate from Production</span>
+                <span class="check-id">A.8.31.2</span>
+            </div>
+            <div class="check-details">
+                <p>Security groups for development and testing should be separate from production groups.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-low">LOW</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BA030>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.32 — Change Management</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">GPO Versioning Active</span>
+                <span class="check-id">A.8.32.1</span>
+            </div>
+            <div class="check-details">
+                <p>Group Policy Objects should be versioned to track changes and support rollback.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B9260>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">AD Change Notifications Configured</span>
+                <span class="check-id">A.8.32.2</span>
+            </div>
+            <div class="check-details">
+                <p>AD replication change notifications should be configured to promptly propagate changes.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-low">LOW</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BB020>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.33 — Test Information</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">No Test Accounts in Production AD</span>
+                <span class="check-id">A.8.33.1</span>
+            </div>
+            <div class="check-details">
+                <p>Test or temporary accounts should not exist in the production Active Directory environment.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">0</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BAF10>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">No Users with Empty Passwords</span>
+                <span class="check-id">A.8.33.2</span>
+            </div>
+            <div class="check-details">
+                <p>No enabled user accounts should have empty (blank) passwords.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">0</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BB570>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.34 — Protection of Information Systems During Audit Testing</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Audit/Compliance Accounts Identifiable</span>
+                <span class="check-id">A.8.34.1</span>
+            </div>
+            <div class="check-details">
+                <p>Accounts used for audit and compliance testing should be clearly identifiable and follow naming conventions.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-low">LOW</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BB790>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">No Temporarily Elevated Accounts Left Active</span>
+                <span class="check-id">A.8.34.2</span>
+            </div>
+            <div class="check-details">
+                <p>Temporary privileged access should be revoked after audit activities. No accounts should be lingering in admin groups from past audits.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">0</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BAAD0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.4 — Access to Source Code</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Developer Groups Exist for Access Control</span>
+                <span class="check-id">A.8.4.1</span>
+            </div>
+            <div class="check-details">
+                <p>Dedicated security groups should exist for managing access to source code repositories and development resources.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BA9C0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Service Accounts for Source Control Identified</span>
+                <span class="check-id">A.8.4.2</span>
+            </div>
+            <div class="check-details">
+                <p>Service accounts used for source code management (Git, SVN, etc.) should be properly identified and managed in AD.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-low">LOW</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">0</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B8F30>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.5 — Secure Authentication</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Minimum Password Length >= 12</span>
+                <span class="check-id">A.8.5.1</span>
+            </div>
+            <div class="check-details">
+                <p>The domain password policy should enforce a minimum password length of at least 12 characters.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">12</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B9370>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Password Complexity Enabled</span>
+                <span class="check-id">A.8.5.2</span>
+            </div>
+            <div class="check-details">
+                <p>Password complexity requirements should be enabled to enforce strong passwords containing uppercase, lowercase, digits, and special characters.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B96A0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Maximum Password Age <= 90 Days</span>
+                <span class="check-id">A.8.5.3</span>
+            </div>
+            <div class="check-details">
+                <p>Passwords should expire within 90 days to limit exposure from compromised credentials.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">90</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BA360>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Password History >= 12</span>
+                <span class="check-id">A.8.5.4</span>
+            </div>
+            <div class="check-details">
+                <p>Password history should remember at least 12 previous passwords to prevent password reuse.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">12</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BA140>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Account Lockout Threshold Configured</span>
+                <span class="check-id">A.8.5.5</span>
+            </div>
+            <div class="check-details">
+                <p>Account lockout threshold should be set to prevent brute-force attacks. Recommended: 5 or fewer invalid attempts.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">0</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B9AE0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Account Lockout Duration >= 30 Minutes</span>
+                <span class="check-id">A.8.5.6</span>
+            </div>
+            <div class="check-details">
+                <p>Locked accounts should remain locked for at least 30 minutes to slow down brute-force attacks.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">30</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B9D00>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Kerberos Ticket Max Lifetime <= 10 Hours</span>
+                <span class="check-id">A.8.5.7</span>
+            </div>
+            <div class="check-details">
+                <p>Kerberos TGT lifetime should be limited to reduce the window of attack if tickets are compromised.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B97B0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Reversible Encryption Disabled</span>
+                <span class="check-id">A.8.5.8</span>
+            </div>
+            <div class="check-details">
+                <p>Storing passwords using reversible encryption should be disabled as it is equivalent to storing plaintext passwords.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">False</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B8F30>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.6 — Capacity Management</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Domain Controller Disk Space Adequate</span>
+                <span class="check-id">A.8.6.1</span>
+            </div>
+            <div class="check-details">
+                <p>Domain Controllers should have sufficient free disk space on the system drive to ensure AD operations are not disrupted.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">10</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BA9C0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">AD Replication Healthy</span>
+                <span class="check-id">A.8.6.2</span>
+            </div>
+            <div class="check-details">
+                <p>Active Directory replication between Domain Controllers should be functioning without errors.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BAAD0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.7 — Protection Against Malware</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Windows Defender Antivirus Enabled</span>
+                <span class="check-id">A.8.7.1</span>
+            </div>
+            <div class="check-details">
+                <p>Windows Defender or an equivalent antivirus solution should be running on the Domain Controller.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BB130>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Antivirus Definitions Up-to-Date</span>
+                <span class="check-id">A.8.7.2</span>
+            </div>
+            <div class="check-details">
+                <p>Antivirus signature definitions should be up-to-date (within the last 7 days) to protect against latest threats.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BB240>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.8 — Management of Technical Vulnerabilities</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">SMBv1 Protocol Disabled</span>
+                <span class="check-id">A.8.8.1</span>
+            </div>
+            <div class="check-details">
+                <p>SMBv1 is a legacy protocol with known vulnerabilities (WannaCry, EternalBlue). It should be disabled.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B88D0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Windows Updates Recently Installed</span>
+                <span class="check-id">A.8.8.2</span>
+            </div>
+            <div class="check-details">
+                <p>Windows updates should be installed regularly. The last update should be within the past 30 days.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B9590>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">LLMNR Disabled</span>
+                <span class="check-id">A.8.8.3</span>
+            </div>
+            <div class="check-details">
+                <p>Link-Local Multicast Name Resolution (LLMNR) should be disabled to prevent name resolution poisoning attacks.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203B99D0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.9 — Configuration Management</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">Group Policies Defined</span>
+                <span class="check-id">A.8.9.1</span>
+            </div>
+            <div class="check-details">
+                <p>Multiple Group Policies should be defined to manage system configurations across the domain.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">3</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BA7A0>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-error">ERROR</span>
+                <span class="check-title">GPOs Linked to OUs</span>
+                <span class="check-id">A.8.9.2</span>
+            </div>
+            <div class="check-details">
+                <p>Group Policies should be linked to Organizational Units to enforce configuration standards.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">Error: HTTPConnectionPool(host='172.22.21.163', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001A6203BA580>: Failed to establish a new connection: [WinError 10051] A socket operation was attempted to an unreachable network'))</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+
+    <!-- Footer -->
+    <div class="report-footer">
+        ISO 27001:2022 Annex A Section 8 Audit Report — Generated by ISO Audit App
+    </div>
+</div>
+</body>
+</html>

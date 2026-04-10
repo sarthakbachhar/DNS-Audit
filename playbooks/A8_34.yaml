@@ -1,0 +1,46 @@
+# ============================================================
+# A.8.34 - Protection of Information Systems During Audit Testing
+# ============================================================
+# Checks audit account controls and temporary access.
+
+control: "A.8.34"
+control_name: "Protection of Information Systems During Audit Testing"
+
+checks:
+  - id: "A.8.34.1"
+    title: "Audit/Compliance Accounts Identifiable"
+    description: "Accounts used for audit and compliance testing should be clearly identifiable and follow naming conventions."
+    severity: "low"
+    powershell: |
+      $auditAccounts = Get-ADUser -Filter {
+        Name -like '*audit*' -or Name -like '*compliance*' -or Name -like '*scanner*'
+      } -Properties Enabled,Description
+      if ($auditAccounts) { ($auditAccounts | Measure-Object).Count.ToString() + " audit accounts found" } else { "No audit accounts" }
+    check:
+      operator: "exists"
+      expected: ""
+    remediation: |
+      1. Create dedicated audit accounts with clear naming:
+         New-ADUser -Name "SVC-AuditScanner" -Description "ISO 27001 Audit Service Account"
+      2. Place audit accounts in a dedicated OU
+      3. Apply restricted permissions — only what's needed for auditing
+      4. Set expiry dates for temporary audit access
+
+  - id: "A.8.34.2"
+    title: "No Temporarily Elevated Accounts Left Active"
+    description: "Temporary privileged access should be revoked after audit activities. No accounts should be lingering in admin groups from past audits."
+    severity: "medium"
+    powershell: |
+      $adminMembers = Get-ADGroupMember -Identity "Domain Admins" -Recursive
+      $auditInAdmin = $adminMembers | Where-Object { $_.Name -match 'audit|scan|compliance|temp' }
+      if ($auditInAdmin) { ($auditInAdmin | Measure-Object).Count.ToString() } else { "0" }
+    check:
+      operator: "less_than_equal"
+      expected: "0"
+    remediation: |
+      1. Review admin group for audit accounts:
+         Get-ADGroupMember -Identity "Domain Admins" | Where { $_.Name -match 'audit|scan|compliance|temp' }
+      2. Remove temporary audit accounts from privileged groups:
+         Remove-ADGroupMember -Identity "Domain Admins" -Members "AuditAccount"
+      3. Implement time-bound privileged access (PAM)
+      4. Document all temporary access grants and revocations

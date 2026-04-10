@@ -1,0 +1,45 @@
+# ============================================================
+# A.8.6 - Capacity Management
+# ============================================================
+# Checks AD infrastructure capacity and health.
+
+control: "A.8.6"
+control_name: "Capacity Management"
+
+checks:
+  - id: "A.8.6.1"
+    title: "Domain Controller Disk Space Adequate"
+    description: "Domain Controllers should have sufficient free disk space on the system drive to ensure AD operations are not disrupted."
+    severity: "high"
+    powershell: |
+      $drive = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
+      [math]::Round($drive.FreeSpace / 1GB, 2)
+    check:
+      operator: "greater_than_equal"
+      expected: "10"
+    remediation: |
+      1. Check current disk usage: Get-CimInstance Win32_LogicalDisk
+      2. Clean up unnecessary files:
+         - Clear Windows temp files
+         - Remove old log files
+         - Clear Windows Update cache: Dism.exe /online /Cleanup-Image /StartComponentCleanup
+      3. Consider increasing disk size if persistently low
+      4. Implement disk space monitoring alerts
+
+  - id: "A.8.6.2"
+    title: "AD Replication Healthy"
+    description: "Active Directory replication between Domain Controllers should be functioning without errors."
+    severity: "high"
+    powershell: |
+      $result = repadmin /replsummary /bysrc /bydest /sort:delta 2>&1
+      $failures = $result | Select-String 'fail' | Measure-Object
+      if ($failures.Count -eq 0) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Check replication status: repadmin /replsummary
+      2. Check for specific errors: repadmin /showrepl
+      3. Force replication: repadmin /syncall /AdeP
+      4. Check DNS resolution between DCs
+      5. Verify network connectivity between DC sites

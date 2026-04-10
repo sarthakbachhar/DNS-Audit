@@ -1,0 +1,46 @@
+# ============================================================
+# A.8.33 - Test Information
+# ============================================================
+# Checks for test accounts and default passwords in AD.
+
+control: "A.8.33"
+control_name: "Test Information"
+
+checks:
+  - id: "A.8.33.1"
+    title: "No Test Accounts in Production AD"
+    description: "Test or temporary accounts should not exist in the production Active Directory environment."
+    severity: "medium"
+    powershell: |
+      $testAccounts = Get-ADUser -Filter {
+        Name -like '*test*' -or Name -like '*temp*' -or Name -like '*demo*' -or Name -like '*sample*'
+      } -Properties Enabled | Where-Object { $_.Enabled -eq $true }
+      if ($testAccounts) { ($testAccounts | Measure-Object).Count.ToString() } else { "0" }
+    check:
+      operator: "less_than_equal"
+      expected: "0"
+    remediation: |
+      1. List test accounts:
+         Get-ADUser -Filter {Name -like '*test*' -or Name -like '*temp*' -or Name -like '*demo*'} -Properties Enabled | Where { $_.Enabled } | Select Name,SamAccountName
+      2. Disable or remove test accounts:
+         Disable-ADAccount -Identity "testuser"
+      3. Move test accounts to a separate OU if needed for development
+      4. Never use test accounts with elevated privileges
+
+  - id: "A.8.33.2"
+    title: "No Users with Empty Passwords"
+    description: "No enabled user accounts should have empty (blank) passwords."
+    severity: "high"
+    powershell: |
+      $emptyPwd = Get-ADUser -Filter {PasswordNotRequired -eq $true -and Enabled -eq $true} | Measure-Object
+      $emptyPwd.Count
+    check:
+      operator: "less_than_equal"
+      expected: "0"
+    remediation: |
+      1. List accounts that allow empty passwords:
+         Get-ADUser -Filter {PasswordNotRequired -eq $true -and Enabled -eq $true} | Select Name,SamAccountName
+      2. Remove the PasswordNotRequired flag:
+         Set-ADUser -Identity <user> -PasswordNotRequired $false
+      3. Force password reset:
+         Set-ADUser -Identity <user> -ChangePasswordAtLogon $true

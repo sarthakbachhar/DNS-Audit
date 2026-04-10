@@ -1,0 +1,95 @@
+# ============================================================
+# A.8.15 - Logging
+# ============================================================
+# Checks audit policy and logging configuration in AD.
+
+control: "A.8.15"
+control_name: "Logging"
+
+checks:
+  - id: "A.8.15.1"
+    title: "Audit Policy - Account Logon Events"
+    description: "Audit policy should log both success and failure for account logon events to track authentication activity."
+    severity: "high"
+    powershell: |
+      $policy = auditpol /get /subcategory:"Credential Validation" 2>&1
+      if ($policy -match 'Success and Failure') { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Configure via GPO:
+         Computer Configuration > Policies > Windows Settings > Security Settings >
+         Advanced Audit Policy Configuration > Audit Policies > Account Logon
+      2. Enable "Audit Credential Validation" for Success and Failure
+      3. Or via command line:
+         auditpol /set /subcategory:"Credential Validation" /success:enable /failure:enable
+      4. Run: gpupdate /force
+
+  - id: "A.8.15.2"
+    title: "Audit Policy - Account Management"
+    description: "User and group account management events should be audited to track privilege changes."
+    severity: "high"
+    powershell: |
+      $policy = auditpol /get /subcategory:"User Account Management" 2>&1
+      if ($policy -match 'Success and Failure') { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Configure via GPO:
+         Advanced Audit Policy Configuration > Account Management
+      2. Enable "Audit User Account Management" for Success and Failure
+      3. Also enable "Audit Security Group Management"
+      4. Run: gpupdate /force
+
+  - id: "A.8.15.3"
+    title: "Audit Policy - Directory Service Access"
+    description: "Directory Service access should be audited to track AD object access and modifications."
+    severity: "high"
+    powershell: |
+      $policy = auditpol /get /subcategory:"Directory Service Access" 2>&1
+      if ($policy -match 'Success and Failure' -or $policy -match 'Success') { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Configure via GPO:
+         Advanced Audit Policy Configuration > DS Access
+      2. Enable "Audit Directory Service Access" for Success and Failure
+      3. Enable "Audit Directory Service Changes"
+      4. Configure SACLs on critical AD objects for detailed tracking
+
+  - id: "A.8.15.4"
+    title: "Audit Policy - Logon/Logoff Events"
+    description: "Logon and logoff events should be audited to track user access patterns and detect unauthorized access."
+    severity: "high"
+    powershell: |
+      $policy = auditpol /get /subcategory:"Logon" 2>&1
+      if ($policy -match 'Success and Failure') { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Configure via GPO:
+         Advanced Audit Policy Configuration > Logon/Logoff
+      2. Enable "Audit Logon" for Success and Failure
+      3. Also enable "Audit Logoff" and "Audit Special Logon"
+      4. Run: gpupdate /force
+
+  - id: "A.8.15.5"
+    title: "Audit Policy - Policy Changes"
+    description: "Policy change events should be audited to detect unauthorized modifications to security policies."
+    severity: "medium"
+    powershell: |
+      $policy = auditpol /get /subcategory:"Audit Policy Change" 2>&1
+      if ($policy -match 'Success') { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Configure via GPO:
+         Advanced Audit Policy Configuration > Policy Change
+      2. Enable "Audit Audit Policy Change" for Success and Failure
+      3. Enable "Audit Authentication Policy Change"
+      4. Run: gpupdate /force

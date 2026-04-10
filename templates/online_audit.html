@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block title %}New AD Audit — ISO Audit{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1 class="page-title">New Active Directory Audit</h1>
+            <p class="page-subtitle">Connect via WinRM and audit {{ playbook_count }} ISO 27001:2022 Annex A.8 controls</p>
+        </div>
+    </div>
+
+    <div class="audit-layout">
+
+        <!-- Left: Connection Form -->
+        <div class="audit-form-col">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                        </svg>
+                        Connection Details
+                    </h2>
+                </div>
+
+                <form action="{{ url_for('run_online_audit') }}" method="POST" id="adAuditForm" class="audit-form">
+                    <div class="form-group">
+                        <label for="host" class="form-label">AD Server IP / Hostname</label>
+                        <input type="text" name="host" id="host" class="form-input"
+                            placeholder="192.168.1.10 or dc01.corp.local" required autocomplete="off">
+                        <span class="form-hint">IP address or FQDN of your Domain Controller</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" name="username" id="username" class="form-input"
+                            placeholder="DOMAIN\Administrator" required autocomplete="off">
+                        <span class="form-hint">Domain Admin account (e.g. CORP\Administrator)</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <input type="password" name="password" id="password" class="form-input"
+                                placeholder="••••••••••••" required>
+                            <button type="button" class="input-addon" id="togglePass" title="Show/hide password">
+                                <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                <svg class="eye-closed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                                    <line x1="1" y1="1" x2="23" y2="23"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Connection Type</label>
+                        <div class="transport-options">
+                            <label class="transport-opt">
+                                <input type="radio" name="transport" value="ntlm" checked>
+                                <span class="transport-card">
+                                    <span class="transport-name">HTTP / NTLM</span>
+                                    <span class="transport-port">Port 5985</span>
+                                    <span class="transport-desc">Standard — recommended for LAN</span>
+                                </span>
+                            </label>
+                            <label class="transport-opt">
+                                <input type="radio" name="transport" value="ssl">
+                                <span class="transport-card">
+                                    <span class="transport-name">HTTPS / SSL</span>
+                                    <span class="transport-port">Port 5986</span>
+                                    <span class="transport-desc">Encrypted — required over WAN</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full btn-lg" id="runAuditBtn">
+                        <span class="btn-content" id="btnContent">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="5,3 19,12 5,21 5,3"/>
+                            </svg>
+                            Run Audit
+                        </span>
+                        <span class="btn-loading" id="btnLoading" style="display:none;">
+                            <span class="spinner"></span>
+                            Connecting…
+                        </span>
+                    </button>
+
+                    <div class="form-note">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                        </svg>
+                        Credentials are used only for the WinRM session and are never stored.
+                    </div>
+                </form>
+            </div>
+
+            <!-- Prerequisites -->
+            <div class="card prereq-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                        Prerequisites
+                    </h3>
+                </div>
+                <ul class="prereq-list">
+                    <li class="prereq-item">
+                        <span class="prereq-num">1</span>
+                        <div>
+                            <strong>Enable WinRM</strong>
+                            <p>Run <code>winrm quickconfig</code> on the Domain Controller.</p>
+                        </div>
+                    </li>
+                    <li class="prereq-item">
+                        <span class="prereq-num">2</span>
+                        <div>
+                            <strong>Domain Admin Account</strong>
+                            <p>Use an account with Domain Admin privileges for full audit coverage.</p>
+                        </div>
+                    </li>
+                    <li class="prereq-item">
+                        <span class="prereq-num">3</span>
+                        <div>
+                            <strong>AD PowerShell Module</strong>
+                            <p>The <code>ActiveDirectory</code> PowerShell module must be installed on the DC.</p>
+                        </div>
+                    </li>
+                    <li class="prereq-item">
+                        <span class="prereq-num">4</span>
+                        <div>
+                            <strong>Firewall Port Open</strong>
+                            <p>Port <code>5985</code> (HTTP) or <code>5986</code> (HTTPS) must be reachable.</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Right: Controls Coverage -->
+        <div class="audit-info-col">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                        </svg>
+                        Controls Covered
+                    </h2>
+                    <span class="card-badge">{{ playbook_count }} playbooks</span>
+                </div>
+                <div class="controls-list">
+                    {% for control in controls %}
+                    <div class="control-item">
+                        <span class="control-id">{{ control.id }}</span>
+                        <span class="control-name">{{ control.name }}</span>
+                        <span class="control-checks">{{ control.checks }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- How it works -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                        </svg>
+                        How It Works
+                    </h3>
+                </div>
+                <ol class="steps-list">
+                    <li class="step-item">
+                        <span class="step-num">1</span>
+                        <div><strong>WinRM Connection</strong> — Connects to your DC via NTLM or SSL authentication.</div>
+                    </li>
+                    <li class="step-item">
+                        <span class="step-num">2</span>
+                        <div><strong>System Discovery</strong> — Collects OS, domain, and forest functional level info.</div>
+                    </li>
+                    <li class="step-item">
+                        <span class="step-num">3</span>
+                        <div><strong>{{ playbook_count }} Playbooks</strong> — Each playbook runs PowerShell commands to evaluate an ISO control.</div>
+                    </li>
+                    <li class="step-item">
+                        <span class="step-num">4</span>
+                        <div><strong>Report</strong> — Results are compiled with pass/fail status and remediation steps.</div>
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Form submit — show loading state
+    const form = document.getElementById('adAuditForm');
+    const btn = document.getElementById('runAuditBtn');
+    const btnContent = document.getElementById('btnContent');
+    const btnLoading = document.getElementById('btnLoading');
+
+    form.addEventListener('submit', () => {
+        btnContent.style.display = 'none';
+        btnLoading.style.display = 'inline-flex';
+        btn.disabled = true;
+    });
+
+    // Password toggle
+    const togglePass = document.getElementById('togglePass');
+    const passInput = document.getElementById('password');
+    const eyeOpen = togglePass.querySelector('.eye-open');
+    const eyeClosed = togglePass.querySelector('.eye-closed');
+
+    togglePass.addEventListener('click', () => {
+        if (passInput.type === 'password') {
+            passInput.type = 'text';
+            eyeOpen.style.display = 'none';
+            eyeClosed.style.display = '';
+        } else {
+            passInput.type = 'password';
+            eyeOpen.style.display = '';
+            eyeClosed.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,48 @@
+# ============================================================
+# A.8.23 - Web Filtering
+# ============================================================
+# Checks DNS and web filtering GPO configurations.
+
+control: "A.8.23"
+control_name: "Web Filtering"
+
+checks:
+  - id: "A.8.23.1"
+    title: "DNS Filtering or Proxy GPO Configured"
+    description: "A web filtering solution (DNS-based, proxy, or URL filtering) should be configured via GPO."
+    severity: "medium"
+    powershell: |
+      $result = Get-GPO -All | ForEach-Object {
+        [xml]$report = Get-GPOReport -Guid $_.Id -ReportType Xml
+        if ($report.InnerXml -match 'proxy' -or $report.InnerXml -match 'ProxyServer' -or $report.InnerXml -match 'URLFilter') {
+          $_.DisplayName
+        }
+      }
+      if ($result) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Deploy a web filtering solution:
+         - DNS-based: Configure DNS forwarders to a filtering DNS (e.g., Cisco Umbrella, Cloudflare Gateway)
+         - Proxy-based: Deploy a proxy server and configure via GPO
+      2. Configure IE/Edge proxy settings via GPO:
+         User Configuration > Policies > Administrative Templates > Windows Components >
+         Internet Explorer > Connections > Proxy Settings
+      3. Consider Windows Defender SmartScreen for URL filtering
+
+  - id: "A.8.23.2"
+    title: "DNS Forwarders Configured Securely"
+    description: "DNS forwarders should point to secure, trusted DNS servers, not arbitrary public DNS."
+    severity: "low"
+    powershell: |
+      $forwarders = Get-DnsServerForwarder -ErrorAction SilentlyContinue
+      if ($forwarders) { ($forwarders.IPAddress -join ', ') } else { "None" }
+    check:
+      operator: "exists"
+      expected: ""
+    remediation: |
+      1. Configure DNS forwarders to trusted DNS:
+         Set-DnsServerForwarder -IPAddress "8.8.8.8","8.8.4.4"
+      2. Consider using DNS-over-HTTPS capable forwarders
+      3. Configure conditional forwarders for specific domains if needed

@@ -1,0 +1,67 @@
+# ============================================================
+# A.8.8 - Management of Technical Vulnerabilities
+# ============================================================
+# Checks patch management and vulnerability mitigation in AD.
+
+control: "A.8.8"
+control_name: "Management of Technical Vulnerabilities"
+
+checks:
+  - id: "A.8.8.1"
+    title: "SMBv1 Protocol Disabled"
+    description: "SMBv1 is a legacy protocol with known vulnerabilities (WannaCry, EternalBlue). It should be disabled."
+    severity: "high"
+    powershell: |
+      $smb1 = Get-SmbServerConfiguration | Select-Object -ExpandProperty EnableSMB1Protocol
+      if ($smb1 -eq $false) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Disable SMBv1:
+         Set-SmbServerConfiguration -EnableSMB1Protocol $false -Force
+      2. Disable SMBv1 client:
+         Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol -NoRestart
+      3. Verify: Get-SmbServerConfiguration | Select EnableSMB1Protocol
+      4. Test line-of-business applications for SMBv1 dependencies before disabling
+
+  - id: "A.8.8.2"
+    title: "Windows Updates Recently Installed"
+    description: "Windows updates should be installed regularly. The last update should be within the past 30 days."
+    severity: "high"
+    powershell: |
+      $lastUpdate = Get-HotFix | Sort-Object InstalledOn -Descending | Select-Object -First 1
+      if ($lastUpdate) {
+        $age = (Get-Date) - $lastUpdate.InstalledOn
+        if ($age.Days -le 30) { "True" } else { "False" }
+      } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Check for pending updates:
+         Install-Module PSWindowsUpdate -Force
+         Get-WindowsUpdate
+      2. Install all updates:
+         Install-WindowsUpdate -AcceptAll -AutoReboot
+      3. Configure WSUS or Windows Update for Business
+      4. Schedule monthly maintenance windows for DC patching
+
+  - id: "A.8.8.3"
+    title: "LLMNR Disabled"
+    description: "Link-Local Multicast Name Resolution (LLMNR) should be disabled to prevent name resolution poisoning attacks."
+    severity: "medium"
+    powershell: |
+      $regPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient'
+      $value = Get-ItemProperty -Path $regPath -Name 'EnableMulticast' -ErrorAction SilentlyContinue
+      if ($value -and $value.EnableMulticast -eq 0) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Disable via GPO:
+         Computer Configuration > Administrative Templates > Network > DNS Client
+         Set "Turn off multicast name resolution" to Enabled
+      2. Or via registry:
+         Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient' -Name 'EnableMulticast' -Value 0
+      3. Run: gpupdate /force

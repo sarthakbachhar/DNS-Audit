@@ -1,0 +1,54 @@
+# ============================================================
+# A.8.13 - Information Backup
+# ============================================================
+# Checks AD backup and SYSVOL replication status.
+
+control: "A.8.13"
+control_name: "Information Backup"
+
+checks:
+  - id: "A.8.13.1"
+    title: "AD System State Backup Recent"
+    description: "Active Directory system state should be backed up regularly. Last backup should be within 30 days."
+    severity: "high"
+    powershell: |
+      $lastBackup = repadmin /showbackup 2>&1
+      if ($lastBackup -match 'last backup') { "Configured" } else {
+        $wbStatus = Get-WBSummary -ErrorAction SilentlyContinue
+        if ($wbStatus) { 
+          $age = (Get-Date) - $wbStatus.LastSuccessfulBackupTime
+          if ($age.Days -le 30) { "True" } else { "False" }
+        } else { "False" }
+      }
+    check:
+      operator: "not_equals"
+      expected: "False"
+    remediation: |
+      1. Install Windows Server Backup feature:
+         Install-WindowsFeature Windows-Server-Backup
+      2. Configure system state backup:
+         wbadmin start systemstatebackup -backupTarget:D: -quiet
+      3. Schedule regular backups via Task Scheduler
+      4. Test restore procedure regularly
+      5. Store backups offsite or on separate media
+
+  - id: "A.8.13.2"
+    title: "SYSVOL Replication Healthy"
+    description: "SYSVOL replication (DFSR or FRS) should be functioning correctly for Group Policy distribution."
+    severity: "high"
+    powershell: |
+      $dfsr = Get-Service DFSR -ErrorAction SilentlyContinue
+      if ($dfsr -and $dfsr.Status -eq 'Running') { "True" } else {
+        $frs = Get-Service NtFrs -ErrorAction SilentlyContinue
+        if ($frs -and $frs.Status -eq 'Running') { "True" } else { "False" }
+      }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Check DFSR service: Get-Service DFSR
+      2. Start DFSR if stopped: Start-Service DFSR
+      3. Verify SYSVOL replication:
+         dcdiag /test:sysvolcheck /test:netlogons
+      4. If using FRS, consider migrating to DFSR:
+         dfsrmig /setglobalstate 0 (through all stages)

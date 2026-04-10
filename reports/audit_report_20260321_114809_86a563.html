@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISO 27001 Audit Report - ubuntuserver</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: 'Inter', -apple-system, sans-serif;
+        background: #ffffff;
+        color: #1e293b;
+        line-height: 1.6;
+        font-size: 11pt;
+    }
+
+    .report-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 50px;
+    }
+
+    /* Header */
+    .report-header {
+        border-bottom: 3px solid #1e40af;
+        padding-bottom: 24px;
+        margin-bottom: 32px;
+    }
+    .report-header h1 {
+        font-size: 24pt;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 4px;
+    }
+    .report-header .subtitle {
+        font-size: 13pt;
+        color: #64748b;
+        font-weight: 400;
+    }
+    .report-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        margin-top: 16px;
+        font-size: 9.5pt;
+        color: #475569;
+    }
+    .report-meta span { display: flex; align-items: center; gap: 6px; }
+    .report-meta strong { color: #1e293b; }
+
+    /* Summary Cards */
+    .summary-section {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 32px;
+    }
+    .summary-card {
+        flex: 1;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+    }
+    .summary-card.total { background: #f1f5f9; }
+    .summary-card.passed { background: #f0fdf4; border-color: #bbf7d0; }
+    .summary-card.failed { background: #fef2f2; border-color: #fecaca; }
+    .summary-card.score { background: #eff6ff; border-color: #bfdbfe; }
+    .summary-card .number {
+        font-size: 28pt;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .summary-card.total .number { color: #334155; }
+    .summary-card.passed .number { color: #16a34a; }
+    .summary-card.failed .number { color: #dc2626; }
+    .summary-card.score .number { color: #2563eb; }
+    .summary-card .label {
+        font-size: 9pt;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin-top: 4px;
+    }
+
+    /* Severity Summary */
+    .severity-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 32px;
+        font-size: 10pt;
+    }
+    .severity-table th {
+        background: #f8fafc;
+        padding: 10px 16px;
+        text-align: left;
+        font-weight: 600;
+        color: #334155;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .severity-table td {
+        padding: 10px 16px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .severity-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 4px;
+        font-size: 8.5pt;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .severity-high { background: #fef2f2; color: #991b1b; }
+    .severity-medium { background: #fffbeb; color: #92400e; }
+    .severity-low { background: #f0fdf4; color: #166534; }
+
+    /* Control Sections */
+    .control-section {
+        margin-bottom: 28px;
+        page-break-inside: avoid;
+    }
+    .control-header {
+        background: #f8fafc;
+        padding: 12px 20px;
+        border-left: 4px solid #1e40af;
+        margin-bottom: 12px;
+        border-radius: 0 6px 6px 0;
+    }
+    .control-header h2 {
+        font-size: 13pt;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    /* Check Results */
+    .check-result {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
+    .check-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 20px;
+        background: #ffffff;
+    }
+    .status-badge {
+        display: inline-block;
+        padding: 3px 12px;
+        border-radius: 4px;
+        font-size: 8.5pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        flex-shrink: 0;
+    }
+    .status-pass { background: #dcfce7; color: #15803d; }
+    .status-fail { background: #fee2e2; color: #b91c1c; }
+    .status-error { background: #fef3c7; color: #92400e; }
+    .check-title {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 10.5pt;
+    }
+    .check-id {
+        margin-left: auto;
+        font-size: 9pt;
+        color: #94a3b8;
+        font-weight: 500;
+        flex-shrink: 0;
+    }
+    .check-details {
+        padding: 12px 20px;
+        background: #fafbfc;
+        border-top: 1px solid #f1f5f9;
+        font-size: 9.5pt;
+    }
+    .check-details p {
+        margin-bottom: 8px;
+        color: #475569;
+    }
+    .detail-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 4px;
+    }
+    .detail-label {
+        font-weight: 600;
+        color: #334155;
+        min-width: 100px;
+    }
+    .detail-value { color: #475569; }
+    .remediation {
+        margin-top: 12px;
+        padding: 12px 16px;
+        background: #fff7ed;
+        border-left: 3px solid #f97316;
+        border-radius: 0 6px 6px 0;
+        font-size: 9pt;
+    }
+    .remediation-title {
+        font-weight: 700;
+        color: #c2410c;
+        margin-bottom: 6px;
+        font-size: 9.5pt;
+    }
+    .remediation pre {
+        white-space: pre-wrap;
+        font-family: 'Courier New', monospace;
+        font-size: 8.5pt;
+        color: #44403c;
+        line-height: 1.5;
+    }
+
+    /* Footer */
+    .report-footer {
+        margin-top: 40px;
+        padding-top: 16px;
+        border-top: 1px solid #e2e8f0;
+        font-size: 8.5pt;
+        color: #94a3b8;
+        text-align: center;
+    }
+
+    @media print {
+        body { font-size: 10pt; }
+        .report-container { padding: 20px; }
+        .control-section { page-break-inside: avoid; }
+        .check-result { page-break-inside: avoid; }
+    }
+</style>
+</head>
+<body>
+<div class="report-container">
+
+    <!-- Header -->
+    <div class="report-header">
+        <h1>ISO 27001 Audit Report</h1>
+        <div class="subtitle">Annex A Section 8 — Technology Controls</div>
+        <div class="report-meta">
+            <span><strong>Host:</strong> ubuntuserver</span>
+            <span><strong>OS:</strong> Ubuntu 24.04.4 LTS</span>
+            <span><strong>Collected:</strong> 2026-03-21T05:57:18Z</span>
+            <span><strong>Report Generated:</strong> 2026-03-21T11:48:09</span>
+        </div>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="summary-section">
+        <div class="summary-card total">
+            <div class="number">35</div>
+            <div class="label">Total Checks</div>
+        </div>
+        <div class="summary-card passed">
+            <div class="number">17</div>
+            <div class="label">Passed</div>
+        </div>
+        <div class="summary-card failed">
+            <div class="number">18</div>
+            <div class="label">Failed</div>
+        </div>
+        <div class="summary-card score">
+            <div class="number">48.6%</div>
+            <div class="label">Compliance</div>
+        </div>
+    </div>
+
+    <!-- Severity Summary -->
+    <table class="severity-table">
+        <thead>
+            <tr>
+                <th>Severity</th>
+                <th>Passed</th>
+                <th>Failed</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><span class="severity-badge severity-high">HIGH</span></td>
+                <td>9</td>
+                <td>9</td>
+                <td>18</td>
+            </tr>
+            <tr>
+                <td><span class="severity-badge severity-medium">MEDIUM</span></td>
+                <td>6</td>
+                <td>8</td>
+                <td>14</td>
+            </tr>
+            <tr>
+                <td><span class="severity-badge severity-low">LOW</span></td>
+                <td>2</td>
+                <td>1</td>
+                <td>3</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Detailed Results by Control -->
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.2 — Privileged Access Rights</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">SSH Root Login Disabled</span>
+                <span class="check-id">A.8.2.1</span>
+            </div>
+            <div class="check-details">
+                <p>Direct root login via SSH must be disabled to enforce accountability and prevent brute-force attacks on the root account.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">no</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value"></span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Edit SSH configuration:
+   sudo nano /etc/ssh/sshd_config
+2. Set or add the following line:
+   PermitRootLogin no
+3. Restart the SSH service:
+   sudo systemctl restart sshd
+4. Ensure you have a non-root user with sudo access before making this change.</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">No NOPASSWD Sudo Entries</span>
+                <span class="check-id">A.8.2.2</span>
+            </div>
+            <div class="check-details">
+                <p>Sudo access should require password authentication. NOPASSWD entries allow privilege escalation without verification.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">false</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Edit the sudoers file safely:
+   sudo visudo
+2. Find and remove or modify any lines containing NOPASSWD:
+   user ALL=(ALL) NOPASSWD: ALL  →  user ALL=(ALL) ALL
+3. Also check files in /etc/sudoers.d/:
+   sudo ls -la /etc/sudoers.d/
+   sudo visudo -f /etc/sudoers.d/<filename>
+4. Remove the NOPASSWD tag from each entry.</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">Sudoers File Permissions</span>
+                <span class="check-id">A.8.2.3</span>
+            </div>
+            <div class="check-details">
+                <p>The /etc/sudoers file should have restricted permissions (0440) to prevent unauthorized modifications.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">0440</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">0440</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.5 — Secure Authentication</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">SSH Key-Based Authentication Only</span>
+                <span class="check-id">A.8.5.1</span>
+            </div>
+            <div class="check-details">
+                <p>Password-based SSH authentication should be disabled in favor of key-based authentication to prevent brute-force attacks.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">no</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value"></span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. First, ensure SSH key-based authentication is set up:
+   ssh-keygen -t ed25519 -C "your_email@example.com"
+   ssh-copy-id user@server
+2. Test key-based login works before disabling passwords.
+3. Edit SSH configuration:
+   sudo nano /etc/ssh/sshd_config
+4. Set:
+   PasswordAuthentication no
+   PubkeyAuthentication yes
+5. Restart SSH:
+   sudo systemctl restart sshd</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">Password Minimum Length (>=12)</span>
+                <span class="check-id">A.8.5.2</span>
+            </div>
+            <div class="check-details">
+                <p>Passwords must be at least 12 characters long to provide adequate security against brute-force attacks.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">12</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value"></span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Install pam_pwquality if not present:
+   sudo apt install libpam-pwquality
+2. Edit pwquality configuration:
+   sudo nano /etc/security/pwquality.conf
+3. Set minimum password length:
+   minlen = 12
+4. Ensure PAM is configured to use pwquality:
+   sudo nano /etc/pam.d/common-password
+   Add/modify: password requisite pam_pwquality.so retry=3</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">Password Maximum Age (<=90 days)</span>
+                <span class="check-id">A.8.5.3</span>
+            </div>
+            <div class="check-details">
+                <p>Passwords should expire within 90 days to limit the window of exposure if credentials are compromised.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">90</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">365</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Edit login definitions:
+   sudo nano /etc/login.defs
+2. Set maximum password age:
+   PASS_MAX_DAYS   90
+3. Apply to existing users (replace <username>):
+   sudo chage --maxdays 90 <username>
+4. Verify with:
+   sudo chage -l <username></pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">Password Complexity Enforcement</span>
+                <span class="check-id">A.8.5.4</span>
+            </div>
+            <div class="check-details">
+                <p>PAM pwquality module should be installed and configured to enforce password complexity requirements.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">true</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">Empty Passwords Not Permitted</span>
+                <span class="check-id">A.8.5.5</span>
+            </div>
+            <div class="check-details">
+                <p>SSH must not allow authentication with empty passwords.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">no</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value"></span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Edit SSH configuration:
+   sudo nano /etc/ssh/sshd_config
+2. Set:
+   PermitEmptyPasswords no
+3. Restart SSH:
+   sudo systemctl restart sshd</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">SSH Max Authentication Attempts (<=4)</span>
+                <span class="check-id">A.8.5.6</span>
+            </div>
+            <div class="check-details">
+                <p>Limit SSH authentication attempts to prevent brute-force attacks. Maximum 4 attempts per connection.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">4</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value"></span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Edit SSH configuration:
+   sudo nano /etc/ssh/sshd_config
+2. Set:
+   MaxAuthTries 4
+3. Restart SSH:
+   sudo systemctl restart sshd
+4. Consider also installing fail2ban for additional protection:
+   sudo apt install fail2ban</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">SSH Login Grace Time (<=60 seconds)</span>
+                <span class="check-id">A.8.5.7</span>
+            </div>
+            <div class="check-details">
+                <p>The time allowed to complete SSH authentication should be limited to 60 seconds to prevent resource exhaustion.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-low">LOW</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">60</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value"></span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Edit SSH configuration:
+   sudo nano /etc/ssh/sshd_config
+2. Set:
+   LoginGraceTime 60
+3. Restart SSH:
+   sudo systemctl restart sshd</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">SSH X11 Forwarding Disabled</span>
+                <span class="check-id">A.8.5.8</span>
+            </div>
+            <div class="check-details">
+                <p>X11 forwarding should be disabled unless specifically required, as it can be exploited for unauthorized display access.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">no</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">yes</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Edit SSH configuration:
+   sudo nano /etc/ssh/sshd_config
+2. Set:
+   X11Forwarding no
+3. Restart SSH:
+   sudo systemctl restart sshd</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">SSH Warning Banner Configured</span>
+                <span class="check-id">A.8.5.9</span>
+            </div>
+            <div class="check-details">
+                <p>An SSH login banner should be configured to display legal warnings and deter unauthorized access attempts.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-low">LOW</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">none</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value"></span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.7 — Protection Against Malware</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">Antivirus Software Installed (ClamAV)</span>
+                <span class="check-id">A.8.7.1</span>
+            </div>
+            <div class="check-details">
+                <p>An antivirus solution such as ClamAV should be installed to detect and prevent malware.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">true</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">False</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Install ClamAV:
+   sudo apt update
+   sudo apt install clamav clamav-daemon
+2. Update virus definitions:
+   sudo systemctl stop clamav-freshclam
+   sudo freshclam
+   sudo systemctl start clamav-freshclam
+3. Enable and start the daemon:
+   sudo systemctl enable clamav-daemon
+   sudo systemctl start clamav-daemon
+4. Configure scheduled scans:
+   sudo crontab -e
+   Add: 0 2 * * * /usr/bin/clamscan -r /home --log=/var/log/clamav/daily_scan.log</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">Antivirus Service Running</span>
+                <span class="check-id">A.8.7.2</span>
+            </div>
+            <div class="check-details">
+                <p>The ClamAV antivirus daemon should be actively running to provide real-time malware protection.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">true</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">False</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Start the ClamAV daemon:
+   sudo systemctl start clamav-daemon
+2. Enable it to start on boot:
+   sudo systemctl enable clamav-daemon
+3. Check status:
+   sudo systemctl status clamav-daemon
+4. If ClamAV is not installed, install it first (see A.8.7.1).</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.8 — Management of Technical Vulnerabilities</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">Automatic Security Updates Enabled</span>
+                <span class="check-id">A.8.8.1</span>
+            </div>
+            <div class="check-details">
+                <p>Unattended-upgrades should be enabled to automatically install security patches and reduce the window of vulnerability.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">true</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">No Pending Security Updates</span>
+                <span class="check-id">A.8.8.2</span>
+            </div>
+            <div class="check-details">
+                <p>All available security patches should be applied promptly. Pending security updates indicate unpatched vulnerabilities.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">0</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">0</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.9 — Configuration Management</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">/etc/passwd File Permissions</span>
+                <span class="check-id">A.8.9.1</span>
+            </div>
+            <div class="check-details">
+                <p>The /etc/passwd file should have permissions set to 0644 (readable by all, writable only by root).</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">0644</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">0644</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">/etc/shadow File Permissions</span>
+                <span class="check-id">A.8.9.2</span>
+            </div>
+            <div class="check-details">
+                <p>The /etc/shadow file should have permissions set to 0640 or more restrictive to protect password hashes.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">0640</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">0640</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">SSH Configuration File Permissions</span>
+                <span class="check-id">A.8.9.3</span>
+            </div>
+            <div class="check-details">
+                <p>The /etc/ssh/sshd_config file should have permissions set to 0600 to prevent unauthorized reading of SSH settings.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">0600</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">0644</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Set correct permissions:
+   sudo chmod 600 /etc/ssh/sshd_config
+2. Set correct ownership:
+   sudo chown root:root /etc/ssh/sshd_config
+3. Verify:
+   ls -la /etc/ssh/sshd_config
+   Expected: -rw------- 1 root root</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">/etc/gshadow File Permissions</span>
+                <span class="check-id">A.8.9.4</span>
+            </div>
+            <div class="check-details">
+                <p>The /etc/gshadow file should have permissions set to 0640 to protect group password information.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">0640</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">0640</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.13 — Information Backup</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">Backup Solution Configured</span>
+                <span class="check-id">A.8.13.1</span>
+            </div>
+            <div class="check-details">
+                <p>A backup solution should be configured with scheduled backup jobs to ensure data can be recovered in case of failure.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">true</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">False</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Choose and install a backup solution:
+   sudo apt install rsync    # For simple file sync
+   # OR
+   sudo apt install borgbackup  # For deduplicating backups
+   # OR
+   sudo apt install restic      # For encrypted backups
+2. Create a backup script:
+   sudo nano /usr/local/bin/backup.sh
+3. Schedule regular backups via cron:
+   sudo crontab -e
+   Add: 0 2 * * * /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1
+4. Test the backup and verify restore works.
+5. Store backups on a separate system or remote location.</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.15 — Logging</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">Audit Daemon Running (auditd)</span>
+                <span class="check-id">A.8.15.1</span>
+            </div>
+            <div class="check-details">
+                <p>The Linux Audit daemon (auditd) should be running to capture security-relevant system events.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">true</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">Syslog Service Running (rsyslog)</span>
+                <span class="check-id">A.8.15.2</span>
+            </div>
+            <div class="check-details">
+                <p>The rsyslog service should be active to collect and manage system log messages.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">true</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">Audit Rules Configured</span>
+                <span class="check-id">A.8.15.3</span>
+            </div>
+            <div class="check-details">
+                <p>Audit rules should be defined to monitor critical security events such as file access, user authentication, and privilege changes.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">0</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">0</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Create audit rules file:
+   sudo nano /etc/audit/rules.d/audit.rules
+2. Add recommended rules:
+   # Monitor login/logout events
+   -w /var/log/faillog -p wa -k logins
+   -w /var/log/lastlog -p wa -k logins
+
+   # Monitor user/group changes
+   -w /etc/passwd -p wa -k identity
+   -w /etc/group -p wa -k identity
+   -w /etc/shadow -p wa -k identity
+   -w /etc/gshadow -p wa -k identity
+
+   # Monitor sudoers
+   -w /etc/sudoers -p wa -k sudo_changes
+   -w /etc/sudoers.d/ -p wa -k sudo_changes
+
+   # Monitor SSH config
+   -w /etc/ssh/sshd_config -p wa -k sshd_config
+
+   # Monitor system calls for privilege escalation
+   -a always,exit -F arch=b64 -S execve -k exec
+3. Reload audit rules:
+   sudo augenrules --load
+4. Verify rules loaded:
+   sudo auditctl -l</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">Log Retention Configured</span>
+                <span class="check-id">A.8.15.4</span>
+            </div>
+            <div class="check-details">
+                <p>Log rotation should be properly configured to manage log file sizes while retaining logs for an adequate period.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-low">LOW</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">true</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.16 — Monitoring Activities</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">Monitoring Agent Installed</span>
+                <span class="check-id">A.8.16.1</span>
+            </div>
+            <div class="check-details">
+                <p>A monitoring solution should be deployed to track system health, performance, and security events in real-time.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">true</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">False</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Choose and install a monitoring solution:
+   # Option 1: Prometheus Node Exporter
+   sudo apt install prometheus-node-exporter
+   sudo systemctl enable prometheus-node-exporter
+   sudo systemctl start prometheus-node-exporter
+
+   # Option 2: Wazuh Agent (Security monitoring)
+   curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --dearmor > /etc/apt/keyrings/wazuh.gpg
+   sudo apt install wazuh-agent
+
+   # Option 3: Zabbix Agent
+   sudo apt install zabbix-agent
+   sudo systemctl enable zabbix-agent
+   sudo systemctl start zabbix-agent
+2. Configure the agent to report to your monitoring server.
+3. Verify the agent is running:
+   sudo systemctl status <monitoring-service></pre>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.17 — Clock Synchronization</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">NTP Time Synchronization Active</span>
+                <span class="check-id">A.8.17.1</span>
+            </div>
+            <div class="check-details">
+                <p>System clock must be synchronized via NTP to ensure accurate timestamps for logs, certificates, and audit trails.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">true</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">True</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.20 — Networks Security</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">Firewall Active</span>
+                <span class="check-id">A.8.20.1</span>
+            </div>
+            <div class="check-details">
+                <p>A host-based firewall (UFW/iptables) must be enabled and active to control network traffic.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">active</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">inactive</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Enable UFW:
+   sudo ufw enable
+2. Set default policies:
+   sudo ufw default deny incoming
+   sudo ufw default allow outgoing
+3. Allow necessary services:
+   sudo ufw allow ssh
+   # Add other required ports:
+   # sudo ufw allow 80/tcp
+   # sudo ufw allow 443/tcp
+4. Check status:
+   sudo ufw status verbose</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">Default Incoming Traffic Denied</span>
+                <span class="check-id">A.8.20.2</span>
+            </div>
+            <div class="check-details">
+                <p>The firewall should deny all incoming traffic by default and only allow explicitly permitted connections.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">deny</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">deny</span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.22 — Segregation of Networks</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">IPv4 Forwarding Disabled</span>
+                <span class="check-id">A.8.22.1</span>
+            </div>
+            <div class="check-details">
+                <p>IP forwarding should be disabled unless the system is acting as a router, to prevent it from being used to bypass network segmentation.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">0</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">1</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Disable IP forwarding immediately:
+   sudo sysctl -w net.ipv4.ip_forward=0
+2. Make the change persistent:
+   sudo nano /etc/sysctl.conf
+   Add or modify: net.ipv4.ip_forward = 0
+3. Apply:
+   sudo sysctl -p
+4. Verify:
+   cat /proc/sys/net/ipv4/ip_forward
+   Should output: 0</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">ICMP Redirects Not Accepted</span>
+                <span class="check-id">A.8.22.2</span>
+            </div>
+            <div class="check-details">
+                <p>The system should not accept ICMP redirects, which can be used to alter routing tables and redirect traffic.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">0</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">0</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-fail">FAIL</span>
+                <span class="check-title">ICMP Redirects Not Sent</span>
+                <span class="check-id">A.8.22.3</span>
+            </div>
+            <div class="check-details">
+                <p>The system should not send ICMP redirects to prevent potential man-in-the-middle attacks.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-medium">MEDIUM</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">0</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value">1</span>
+                </div>
+                
+                <div class="remediation">
+                    <div class="remediation-title">⚠ Remediation Steps</div>
+                    <pre>1. Disable sending ICMP redirects:
+   sudo sysctl -w net.ipv4.conf.all.send_redirects=0
+   sudo sysctl -w net.ipv4.conf.default.send_redirects=0
+2. Make persistent:
+   sudo nano /etc/sysctl.conf
+   net.ipv4.conf.all.send_redirects = 0
+   net.ipv4.conf.default.send_redirects = 0
+3. Apply:
+   sudo sysctl -p</pre>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="control-section">
+        <div class="control-header">
+            <h2>A.8.24 — Use of Cryptography</h2>
+        </div>
+
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">SSH Strong Ciphers Only</span>
+                <span class="check-id">A.8.24.1</span>
+            </div>
+            <div class="check-details">
+                <p>SSH should only use strong, modern ciphers. Weak ciphers like 3DES, Blowfish, and CBC-mode ciphers must be avoided.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">3des</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value"></span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">SSH Strong MACs Only</span>
+                <span class="check-id">A.8.24.2</span>
+            </div>
+            <div class="check-details">
+                <p>SSH should use strong Message Authentication Code algorithms. Weak MACs like MD5 and SHA1 must not be used.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">md5</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value"></span>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="check-result">
+            <div class="check-header">
+                <span class="status-badge status-pass">PASS</span>
+                <span class="check-title">SSH Strong Key Exchange Algorithms</span>
+                <span class="check-id">A.8.24.3</span>
+            </div>
+            <div class="check-details">
+                <p>SSH should use strong key exchange algorithms. Weak algorithms like diffie-hellman-group1-sha1 must be avoided.</p>
+                <div class="detail-row">
+                    <span class="detail-label">Severity:</span>
+                    <span class="detail-value"><span class="severity-badge severity-high">HIGH</span></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected:</span>
+                    <span class="detail-value">diffie-hellman-group1</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Actual:</span>
+                    <span class="detail-value"></span>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+    
+
+    <!-- Footer -->
+    <div class="report-footer">
+        ISO 27001:2022 Annex A Section 8 Audit Report — Generated by ISO Audit App
+    </div>
+</div>
+</body>
+</html>

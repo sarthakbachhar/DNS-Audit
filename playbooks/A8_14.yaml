@@ -1,0 +1,64 @@
+# ============================================================
+# A.8.14 - Redundancy of Information Processing Facilities
+# ============================================================
+# Checks DC redundancy, FSMO roles, and site topology.
+
+control: "A.8.14"
+control_name: "Redundancy of Information Processing Facilities"
+
+checks:
+  - id: "A.8.14.1"
+    title: "Multiple Domain Controllers Exist"
+    description: "At least two Domain Controllers should exist for redundancy and fault tolerance."
+    severity: "high"
+    powershell: |
+      (Get-ADDomainController -Filter * | Measure-Object).Count
+    check:
+      operator: "greater_than_equal"
+      expected: "2"
+    remediation: |
+      1. Deploy an additional Domain Controller:
+         Install-WindowsFeature AD-Domain-Services
+         Install-ADDSDomainController -DomainName "domain.com"
+      2. Ensure DCs are in different physical locations if possible
+      3. Verify replication after deployment: repadmin /replsummary
+
+  - id: "A.8.14.2"
+    title: "FSMO Roles Distributed"
+    description: "FSMO (Flexible Single Master Operations) roles should be reviewed to ensure they are on reachable Domain Controllers."
+    severity: "medium"
+    powershell: |
+      $forest = Get-ADForest
+      $domain = Get-ADDomain
+      $roles = @($forest.SchemaMaster, $forest.DomainNamingMaster, $domain.PDCEmulator, $domain.RIDMaster, $domain.InfrastructureMaster)
+      $uniqueHolders = $roles | Select-Object -Unique
+      "$($roles.Count) roles on $($uniqueHolders.Count) DC(s)"
+    check:
+      operator: "exists"
+      expected: ""
+    remediation: |
+      1. View current FSMO holders:
+         netdom query fsmo
+      2. Consider distributing roles across DCs for resilience
+      3. Transfer roles if needed:
+         Move-ADDirectoryServerOperationMasterRole -Identity "DC2" -OperationMasterRole PDCEmulator
+      4. Document FSMO placement for disaster recovery
+
+  - id: "A.8.14.3"
+    title: "AD Sites and Subnets Configured"
+    description: "AD Sites and Services should have properly configured sites and subnets for optimized replication and client authentication."
+    severity: "medium"
+    powershell: |
+      $sites = (Get-ADReplicationSite -Filter * | Measure-Object).Count
+      $subnets = (Get-ADReplicationSubnet -Filter * | Measure-Object).Count
+      "Sites: $sites, Subnets: $subnets"
+    check:
+      operator: "contains"
+      expected: "Sites:"
+    remediation: |
+      1. Open AD Sites and Services
+      2. Create sites matching your physical locations:
+         New-ADReplicationSite -Name "BranchOffice1"
+      3. Create subnets and associate with sites:
+         New-ADReplicationSubnet -Name "10.1.0.0/24" -Site "BranchOffice1"
+      4. Configure inter-site transport links

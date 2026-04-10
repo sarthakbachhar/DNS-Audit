@@ -1,0 +1,66 @@
+# ============================================================
+# A.8.24 - Use of Cryptography
+# ============================================================
+# Checks Kerberos encryption, TLS settings, and certificates.
+
+control: "A.8.24"
+control_name: "Use of Cryptography"
+
+checks:
+  - id: "A.8.24.1"
+    title: "AES Kerberos Encryption Supported"
+    description: "Domain Controllers should support AES (128/256) Kerberos encryption types and DES should be disabled."
+    severity: "high"
+    powershell: |
+      $dc = Get-ADDomainController -Identity $env:COMPUTERNAME
+      $account = Get-ADComputer $dc.Name -Properties msDS-SupportedEncryptionTypes
+      $encTypes = $account.'msDS-SupportedEncryptionTypes'
+      if ($encTypes -band 0x18) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Configure Kerberos encryption via GPO:
+         Computer Configuration > Windows Settings > Security Settings >
+         Local Policies > Security Options
+         "Network security: Configure encryption types allowed for Kerberos"
+      2. Enable: AES128_HMAC_SHA1, AES256_HMAC_SHA1, Future encryption types
+      3. Disable: DES_CBC_CRC, DES_CBC_MD5
+      4. Run: gpupdate /force
+
+  - id: "A.8.24.2"
+    title: "TLS 1.2 Enabled"
+    description: "TLS 1.2 should be enabled on Domain Controllers for secure communications."
+    severity: "high"
+    powershell: |
+      $regPath = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'
+      $value = Get-ItemProperty -Path $regPath -Name 'Enabled' -ErrorAction SilentlyContinue
+      if ($value -eq $null -or $value.Enabled -ne 0) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Enable TLS 1.2:
+         New-Item -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' -Force
+         Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' -Name 'Enabled' -Value 1
+         Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' -Name 'DisabledByDefault' -Value 0
+      2. Restart the server after changes
+
+  - id: "A.8.24.3"
+    title: "SSL 3.0 Disabled"
+    description: "SSL 3.0 should be disabled as it has known vulnerabilities (POODLE attack)."
+    severity: "high"
+    powershell: |
+      $regPath = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 3.0\Server'
+      $value = Get-ItemProperty -Path $regPath -Name 'Enabled' -ErrorAction SilentlyContinue
+      if ($value -and $value.Enabled -eq 0) { "True" } else {
+        if ($value -eq $null) { "NotConfigured" } else { "False" }
+      }
+    check:
+      operator: "not_equals"
+      expected: "False"
+    remediation: |
+      1. Disable SSL 3.0:
+         New-Item -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 3.0\Server' -Force
+         Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 3.0\Server' -Name 'Enabled' -Value 0
+      2. Restart the server after changes

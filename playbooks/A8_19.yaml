@@ -1,0 +1,52 @@
+# ============================================================
+# A.8.19 - Installation of Software on Operational Systems
+# ============================================================
+# Checks software restriction policies via AD GPO.
+
+control: "A.8.19"
+control_name: "Installation of Software on Operational Systems"
+
+checks:
+  - id: "A.8.19.1"
+    title: "AppLocker or Software Restriction Policy Defined"
+    description: "AppLocker or Software Restriction Policies should be configured to control which applications can run."
+    severity: "medium"
+    powershell: |
+      $appLocker = Get-GPO -All | ForEach-Object {
+        [xml]$report = Get-GPOReport -Guid $_.Id -ReportType Xml
+        if ($report.InnerXml -match 'AppLocker' -or $report.InnerXml -match 'SRP' -or $report.InnerXml -match 'SoftwareRestriction') {
+          $_.DisplayName
+        }
+      }
+      if ($appLocker) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Create an AppLocker GPO:
+         Computer Configuration > Policies > Windows Settings > Security Settings >
+         Application Control Policies > AppLocker
+      2. Define rules for:
+         - Executable Rules (allow signed applications)
+         - Windows Installer Rules
+         - Script Rules
+         - Packaged App Rules
+      3. Start with Audit mode before enforcing
+      4. Ensure the Application Identity service is running
+
+  - id: "A.8.19.2"
+    title: "Application Identity Service Running"
+    description: "The Application Identity service must be running for AppLocker policies to be enforced."
+    severity: "low"
+    powershell: |
+      $svc = Get-Service AppIDSvc -ErrorAction SilentlyContinue
+      if ($svc) { $svc.Status.ToString() } else { "NotInstalled" }
+    check:
+      operator: "equals"
+      expected: "Running"
+    remediation: |
+      1. Start the Application Identity service:
+         Start-Service AppIDSvc
+      2. Set to automatic:
+         Set-Service AppIDSvc -StartupType Automatic
+      3. Configure via GPO for all DCs and servers

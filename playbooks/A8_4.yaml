@@ -1,0 +1,44 @@
+# ============================================================
+# A.8.4 - Access to Source Code
+# ============================================================
+# Checks for source code repository access controls in AD.
+
+control: "A.8.4"
+control_name: "Access to Source Code"
+
+checks:
+  - id: "A.8.4.1"
+    title: "Developer Groups Exist for Access Control"
+    description: "Dedicated security groups should exist for managing access to source code repositories and development resources."
+    severity: "medium"
+    powershell: |
+      $devGroups = Get-ADGroup -Filter {Name -like '*Developer*' -or Name -like '*Dev*' -or Name -like '*Source*' -or Name -like '*Git*' -or Name -like '*Code*'}
+      if ($devGroups) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Create dedicated security groups for developer access:
+         New-ADGroup -Name "Developers" -GroupScope Global -GroupCategory Security
+      2. Create groups by project or repository if needed:
+         New-ADGroup -Name "ProjectX-Developers" -GroupScope Global -GroupCategory Security
+      3. Use these groups to control access to source code repositories
+      4. Review membership regularly
+
+  - id: "A.8.4.2"
+    title: "Service Accounts for Source Control Identified"
+    description: "Service accounts used for source code management (Git, SVN, etc.) should be properly identified and managed in AD."
+    severity: "low"
+    powershell: |
+      $spns = Get-ADUser -Filter * -Properties ServicePrincipalNames | Where-Object { $_.ServicePrincipalNames -match 'HTTP|git|svn|tfs' }
+      if ($spns) { ($spns | Measure-Object).Count.ToString() } else { "0" }
+    check:
+      operator: "greater_than_equal"
+      expected: "0"
+    remediation: |
+      1. Identify all source code management service accounts
+      2. Register proper SPNs for each service:
+         setspn -A HTTP/gitserver.domain.com serviceAccount
+      3. Use managed service accounts (gMSA) where possible:
+         New-ADServiceAccount -Name "gMSA-Git" -DNSHostName "git.domain.com"
+      4. Ensure service account passwords are rotated regularly

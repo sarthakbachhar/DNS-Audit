@@ -1,0 +1,44 @@
+# ============================================================
+# A.8.17 - Clock Synchronization
+# ============================================================
+# Checks NTP/W32Time configuration on Domain Controllers.
+
+control: "A.8.17"
+control_name: "Clock Synchronization"
+
+checks:
+  - id: "A.8.17.1"
+    title: "W32Time Service Running"
+    description: "The Windows Time service must be running on Domain Controllers for Kerberos authentication and accurate logging."
+    severity: "high"
+    powershell: |
+      $svc = Get-Service W32Time
+      $svc.Status.ToString()
+    check:
+      operator: "equals"
+      expected: "Running"
+    remediation: |
+      1. Start the W32Time service:
+         Start-Service W32Time
+      2. Set to automatic:
+         Set-Service W32Time -StartupType Automatic
+      3. Verify: Get-Service W32Time
+
+  - id: "A.8.17.2"
+    title: "NTP Source Configured"
+    description: "The PDC Emulator should be configured to sync with an external NTP source for accurate time."
+    severity: "medium"
+    powershell: |
+      $source = w32tm /query /source 2>&1
+      if ($source -and $source -notmatch 'error' -and $source -notmatch 'Local CMOS') { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Configure external NTP source on PDC Emulator:
+         w32tm /config /manualpeerlist:"time.windows.com,0x1" /syncfromflags:manual /reliable:yes /update
+      2. Restart the time service:
+         Restart-Service W32Time
+      3. Force sync:
+         w32tm /resync /force
+      4. Verify: w32tm /query /source

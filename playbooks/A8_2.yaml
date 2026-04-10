@@ -1,0 +1,92 @@
+# ============================================================
+# A.8.2 - Privileged Access Rights
+# ============================================================
+# Checks privileged group membership and admin account hygiene.
+
+control: "A.8.2"
+control_name: "Privileged Access Rights"
+
+checks:
+  - id: "A.8.2.1"
+    title: "Domain Admins Group Membership Limited"
+    description: "The Domain Admins group should have minimal members. Excessive privileged accounts increase the attack surface."
+    severity: "high"
+    powershell: |
+      (Get-ADGroupMember -Identity "Domain Admins" -Recursive | Measure-Object).Count
+    check:
+      operator: "less_than_equal"
+      expected: "5"
+    remediation: |
+      1. Review Domain Admins membership:
+         Get-ADGroupMember -Identity "Domain Admins" -Recursive
+      2. Remove unnecessary members:
+         Remove-ADGroupMember -Identity "Domain Admins" -Members <username>
+      3. Use dedicated admin accounts separate from daily-use accounts
+      4. Implement tiered administration model
+
+  - id: "A.8.2.2"
+    title: "Enterprise Admins Group Membership Limited"
+    description: "The Enterprise Admins group should have very few members, ideally only used temporarily for forest-level operations."
+    severity: "high"
+    powershell: |
+      (Get-ADGroupMember -Identity "Enterprise Admins" -Recursive | Measure-Object).Count
+    check:
+      operator: "less_than_equal"
+      expected: "2"
+    remediation: |
+      1. Review Enterprise Admins membership:
+         Get-ADGroupMember -Identity "Enterprise Admins"
+      2. Remove all non-essential members
+      3. Enterprise Admins should ideally be empty during normal operations
+      4. Add members temporarily only when forest-level changes are needed
+
+  - id: "A.8.2.3"
+    title: "Schema Admins Group Membership Limited"
+    description: "The Schema Admins group should be empty during normal operations and populated only when schema changes are needed."
+    severity: "high"
+    powershell: |
+      (Get-ADGroupMember -Identity "Schema Admins" -Recursive | Measure-Object).Count
+    check:
+      operator: "less_than_equal"
+      expected: "1"
+    remediation: |
+      1. Review Schema Admins membership:
+         Get-ADGroupMember -Identity "Schema Admins"
+      2. Remove all members from Schema Admins
+      3. Only add members temporarily when schema modifications are required
+      4. Remove members immediately after schema changes are complete
+
+  - id: "A.8.2.4"
+    title: "AdminSDHolder Protected Accounts Reviewed"
+    description: "The AdminCount attribute flags accounts protected by AdminSDHolder. These should be reviewed to ensure no orphaned protected accounts exist."
+    severity: "medium"
+    powershell: |
+      $protected = Get-ADUser -Filter {AdminCount -eq 1} -Properties AdminCount | Measure-Object
+      $protected.Count
+    check:
+      operator: "less_than_equal"
+      expected: "15"
+    remediation: |
+      1. List all protected accounts:
+         Get-ADUser -Filter {AdminCount -eq 1} -Properties AdminCount,MemberOf
+      2. Review each account to ensure it still needs protection
+      3. For orphaned accounts (no longer in privileged groups):
+         Set-ADUser -Identity <user> -Replace @{AdminCount=0}
+      4. Run: dsacls to reset permissions if needed
+
+  - id: "A.8.2.5"
+    title: "Built-in Administrator Account Renamed"
+    description: "The built-in Administrator account (RID 500) should be renamed to reduce targeting by attackers."
+    severity: "medium"
+    powershell: |
+      $admin = Get-ADUser -Filter {SID -like '*-500'} -Properties SamAccountName
+      if ($admin.SamAccountName -eq 'Administrator') { "False" } else { "True" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Rename the built-in Administrator account:
+         Rename-LocalUser -Name "Administrator" -NewName "ADM_Internal"
+      2. Or via GPO: Computer Configuration > Windows Settings > Security Settings > 
+         Local Policies > Security Options > "Accounts: Rename administrator account"
+      3. Also set a strong unique password for this account

@@ -1,0 +1,54 @@
+# ============================================================
+# A.8.12 - Data Leakage Prevention
+# ============================================================
+# Checks DLP-related GPO settings in AD.
+
+control: "A.8.12"
+control_name: "Data Leakage Prevention"
+
+checks:
+  - id: "A.8.12.1"
+    title: "USB Storage Restriction GPO Configured"
+    description: "A GPO should restrict removable storage devices to prevent data exfiltration via USB drives."
+    severity: "high"
+    powershell: |
+      $result = Get-GPO -All | ForEach-Object {
+        [xml]$report = Get-GPOReport -Guid $_.Id -ReportType Xml
+        if ($report.InnerXml -match 'RemovableStorage' -or $report.InnerXml -match 'WPD Devices') {
+          $_.DisplayName
+        }
+      }
+      if ($result) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Create a GPO for removable storage:
+         Computer Configuration > Administrative Templates > System > Removable Storage Access
+      2. Enable "All Removable Storage classes: Deny all access"
+      3. Or selectively deny: "Removable Disks: Deny write access"
+      4. Link the GPO to the appropriate OUs
+      5. Run: gpupdate /force
+
+  - id: "A.8.12.2"
+    title: "BitLocker Policy Configured"
+    description: "BitLocker drive encryption should be enforced via GPO to protect data on endpoint devices."
+    severity: "medium"
+    powershell: |
+      $result = Get-GPO -All | ForEach-Object {
+        [xml]$report = Get-GPOReport -Guid $_.Id -ReportType Xml
+        if ($report.InnerXml -match 'BitLocker' -or $report.InnerXml -match 'FVE') {
+          $_.DisplayName
+        }
+      }
+      if ($result) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Create a GPO for BitLocker:
+         Computer Configuration > Administrative Templates > Windows Components > BitLocker Drive Encryption
+      2. Enable "Require additional authentication at startup"
+      3. Configure recovery key storage in AD:
+         Enable "Store BitLocker recovery information in Active Directory"
+      4. Link GPO to computer OUs

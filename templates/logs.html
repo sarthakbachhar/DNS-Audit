@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Activity Logs — ISO Audit{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1 class="page-title">Activity Logs</h1>
+            <p class="page-subtitle">A record of all actions performed in the application — logins, audits, user changes, and more.</p>
+        </div>
+        <div class="page-header-right" style="display:flex;align-items:center;gap:10px;">
+            <span class="users-count-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                </svg>
+                {{ logs|length }} entr{{ 'y' if logs|length == 1 else 'ies' }}
+            </span>
+            {% if current_user and current_user.is_admin %}
+            <form action="{{ url_for('clear_activity_logs') }}" method="POST" style="display:inline;"
+                  onsubmit="return confirm('Clear all activity logs? This cannot be undone.')">
+                <button type="submit" class="btn btn-sm btn-danger-ghost">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3,6 5,6 21,6"/>
+                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                    </svg>
+                    Clear All Logs
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if logs %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
+                </svg>
+                Recent Activity
+            </h2>
+            <span class="card-badge">Last {{ logs|length }}</span>
+        </div>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Action</th>
+                        <th>User</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="log-ts-cell text-muted text-sm" style="white-space:nowrap;">
+                            {{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') if log.created_at else '—' }}
+                        </td>
+                        <td>
+                            <span class="log-action-badge
+                                {% if 'Login Failed' in log.action %}log-badge-danger
+                                {% elif 'Login' in log.action or 'Logout' in log.action %}log-badge-info
+                                {% elif 'Audit' in log.action and 'Fail' in log.action %}log-badge-danger
+                                {% elif 'Audit Completed' in log.action %}log-badge-success
+                                {% elif 'Audit' in log.action %}log-badge-accent
+                                {% elif 'Deleted' in log.action or 'Cleared' in log.action %}log-badge-danger
+                                {% elif 'Created' in log.action or 'Registered' in log.action %}log-badge-success
+                                {% elif 'Updated' in log.action or 'Downloaded' in log.action %}log-badge-warning
+                                {% else %}log-badge-neutral
+                                {% endif %}">
+                                {{ log.action }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if log.performed_by %}
+                            <div class="log-user-cell">
+                                <div class="log-user-avatar">{{ log.performed_by[0]|upper }}</div>
+                                <span class="text-sm">{{ log.performed_by }}</span>
+                            </div>
+                            {% else %}
+                            <span class="text-muted text-sm">system</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted text-sm log-details-cell">{{ log.details or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14,2 14,8 20,8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+        </div>
+        <h2 class="empty-title">No activity recorded yet</h2>
+        <p class="empty-text">Actions like logins, audits, and user changes will appear here.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

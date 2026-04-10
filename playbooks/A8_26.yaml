@@ -1,0 +1,45 @@
+# ============================================================
+# A.8.26 - Application Security Requirements
+# ============================================================
+# Checks service account management in AD.
+
+control: "A.8.26"
+control_name: "Application Security Requirements"
+
+checks:
+  - id: "A.8.26.1"
+    title: "Service Accounts Use Managed Service Accounts"
+    description: "Applications should use Group Managed Service Accounts (gMSA) instead of regular user accounts for automatic password management."
+    severity: "medium"
+    powershell: |
+      $gmsa = Get-ADServiceAccount -Filter * -ErrorAction SilentlyContinue
+      if ($gmsa) { ($gmsa | Measure-Object).Count.ToString() } else { "0" }
+    check:
+      operator: "greater_than_equal"
+      expected: "1"
+    remediation: |
+      1. Create a KDS Root Key (if not already done):
+         Add-KdsRootKey -EffectiveImmediately
+      2. Create a Group Managed Service Account:
+         New-ADServiceAccount -Name "gMSA-AppName" -DNSHostName "app.domain.com" -PrincipalsAllowedToRetrieveManagedPassword "ServerGroup$"
+      3. Install the gMSA on the target server:
+         Install-ADServiceAccount -Identity "gMSA-AppName"
+      4. Configure the application to use the gMSA
+
+  - id: "A.8.26.2"
+    title: "Service Account Passwords Not Set to Never Expire"
+    description: "Service accounts with 'Password Never Expires' should be minimized or use gMSA instead."
+    severity: "medium"
+    powershell: |
+      $neverExpire = Get-ADUser -Filter {PasswordNeverExpires -eq $true -and Enabled -eq $true} -Properties PasswordNeverExpires | Measure-Object
+      $neverExpire.Count
+    check:
+      operator: "less_than_equal"
+      expected: "10"
+    remediation: |
+      1. List accounts with non-expiring passwords:
+         Get-ADUser -Filter {PasswordNeverExpires -eq $true -and Enabled -eq $true} -Properties PasswordNeverExpires | Select Name,SamAccountName
+      2. For service accounts, migrate to gMSA (automatic password rotation)
+      3. For remaining accounts, remove the flag:
+         Set-ADUser -Identity <user> -PasswordNeverExpires $false
+      4. Document exceptions with business justification

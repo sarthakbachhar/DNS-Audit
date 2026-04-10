@@ -1,0 +1,54 @@
+# ============================================================
+# A.8.20 - Network Controls
+# ============================================================
+# Checks Windows Firewall and network security settings.
+
+control: "A.8.20"
+control_name: "Network Controls"
+
+checks:
+  - id: "A.8.20.1"
+    title: "Windows Firewall - Domain Profile Enabled"
+    description: "The Windows Firewall Domain profile should be enabled on Domain Controllers."
+    severity: "high"
+    powershell: |
+      (Get-NetFirewallProfile -Profile Domain).Enabled.ToString()
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Enable the Domain Firewall profile:
+         Set-NetFirewallProfile -Profile Domain -Enabled True
+      2. Configure via GPO:
+         Computer Configuration > Policies > Windows Settings > Security Settings >
+         Windows Defender Firewall > Domain Profile
+      3. Enable "Windows Defender Firewall: Protect all network connections"
+
+  - id: "A.8.20.2"
+    title: "Windows Firewall - Private Profile Enabled"
+    description: "The Windows Firewall Private profile should be enabled for additional security layers."
+    severity: "medium"
+    powershell: |
+      (Get-NetFirewallProfile -Profile Private).Enabled.ToString()
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Enable the Private Firewall profile:
+         Set-NetFirewallProfile -Profile Private -Enabled True
+      2. Configure via GPO for consistency across all DCs
+
+  - id: "A.8.20.3"
+    title: "Windows Firewall - Public Profile Enabled"
+    description: "The Windows Firewall Public profile should be enabled and restrictive."
+    severity: "medium"
+    powershell: |
+      (Get-NetFirewallProfile -Profile Public).Enabled.ToString()
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Enable the Public Firewall profile:
+         Set-NetFirewallProfile -Profile Public -Enabled True
+      2. Set default inbound action to Block:
+         Set-NetFirewallProfile -Profile Public -DefaultInboundAction Block

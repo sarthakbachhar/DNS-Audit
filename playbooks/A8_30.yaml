@@ -1,0 +1,42 @@
+# ============================================================
+# A.8.30 - Outsourced Development
+# ============================================================
+# Checks for external trusts and foreign security principals.
+
+control: "A.8.30"
+control_name: "Outsourced Development"
+
+checks:
+  - id: "A.8.30.1"
+    title: "External Trust Relationships Reviewed"
+    description: "External trust relationships allow authentication across domains and should be carefully reviewed."
+    severity: "high"
+    powershell: |
+      $trusts = Get-ADTrust -Filter {TrustType -eq 'External'}
+      if ($trusts) { ($trusts | Measure-Object).Count.ToString() + " external trusts" } else { "No external trusts" }
+    check:
+      operator: "exists"
+      expected: ""
+    remediation: |
+      1. Review external trusts:
+         Get-ADTrust -Filter {TrustType -eq 'External'} | Select Name,Direction,TrustType
+      2. Remove unnecessary trusts
+      3. Enable Selective Authentication on remaining trusts
+      4. Review and validate trust configurations periodically
+
+  - id: "A.8.30.2"
+    title: "Foreign Security Principals Reviewed"
+    description: "Foreign Security Principals (accounts from trusted domains) should be reviewed and limited."
+    severity: "medium"
+    powershell: |
+      $fsp = Get-ADObject -Filter {ObjectClass -eq 'foreignSecurityPrincipal'} -SearchBase "CN=ForeignSecurityPrincipals,$(Get-ADDomain | Select -ExpandProperty DistinguishedName)"
+      if ($fsp) { ($fsp | Measure-Object).Count.ToString() } else { "0" }
+    check:
+      operator: "less_than_equal"
+      expected: "20"
+    remediation: |
+      1. Review foreign security principals:
+         Get-ADObject -Filter {ObjectClass -eq 'foreignSecurityPrincipal'}
+      2. Identify which groups they belong to
+      3. Remove unnecessary foreign security principals
+      4. Document remaining ones with business justification

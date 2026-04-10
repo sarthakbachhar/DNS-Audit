@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — ISO Audit{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1 class="page-title">Audit Dashboard</h1>
+            <p class="page-subtitle">ISO 27001:2022 Annex A.8 — Active Directory compliance audits</p>
+        </div>
+        {% if current_user and current_user.is_admin %}
+        <a href="{{ url_for('online_audit') }}" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="16"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+            New Audit
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- In Progress Banner -->
+    {% if in_progress %}
+    <div class="alert alert-info">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        <span>{{ in_progress|length }} audit{{ 's' if in_progress|length != 1 }} currently running. </span>
+        {% for aid in in_progress %}
+        <a href="{{ url_for('results', audit_id=aid) }}" class="alert-link">View progress →</a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if past_audits %}
+    <!-- Stats Row -->
+    <div class="stats-row">
+        <div class="stat-mini">
+            <span class="stat-mini-value">{{ past_audits | length }}</span>
+            <span class="stat-mini-label">Total Audits</span>
+        </div>
+        <div class="stat-mini">
+            {% set avg_score = (past_audits | map(attribute='summary.compliance_percentage') | list | sum / past_audits | length) | round(1) %}
+            <span class="stat-mini-value {% if avg_score >= 80 %}text-success{% elif avg_score >= 50 %}text-warning{% else %}text-danger{% endif %}">{{ avg_score }}%</span>
+            <span class="stat-mini-label">Avg Compliance</span>
+        </div>
+        <div class="stat-mini">
+            {% set passed_audits = past_audits | selectattr('summary.compliance_percentage', 'ge', 80) | list | length %}
+            <span class="stat-mini-value text-success">{{ passed_audits }}</span>
+            <span class="stat-mini-label">≥ 80% Score</span>
+        </div>
+        <div class="stat-mini">
+            {% set failed_audits = past_audits | selectattr('summary.compliance_percentage', 'lt', 50) | list | length %}
+            <span class="stat-mini-value text-danger">{{ failed_audits }}</span>
+            <span class="stat-mini-label">< 50% Score</span>
+        </div>
+    </div>
+
+    <!-- Audits Table -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+                Recent Audits
+            </h2>
+        </div>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Host / Target</th>
+                        <th>Date</th>
+                        <th>Score</th>
+                        <th>Checks</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for audit in past_audits %}
+                    <tr {% if audit.audit_id in in_progress %}class="row-inprogress"{% endif %}>
+                        <td>
+                            <div class="host-cell">
+                                <div class="host-icon">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <span class="host-name">{{ audit.summary.hostname }}</span>
+                                    <span class="host-id">{{ audit.audit_id }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-muted text-sm">{{ audit.summary.timestamp[:16].replace('T', ' ') }}</td>
+                        <td>
+                            {% if audit.audit_id in in_progress %}
+                            <span class="badge badge-info">Running…</span>
+                            {% else %}
+                            <span class="score-badge
+                                {% if audit.summary.compliance_percentage >= 80 %}score-good
+                                {% elif audit.summary.compliance_percentage >= 50 %}score-warning
+                                {% else %}score-danger{% endif %}">
+                                {{ audit.summary.compliance_percentage }}%
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="text-success text-sm">✓ {{ audit.summary.passed }}</span>
+                            <span class="text-muted text-sm mx-1">·</span>
+                            <span class="text-danger text-sm">✗ {{ audit.summary.failed }}</span>
+                        </td>
+                        <td>
+                            {% if audit.audit_id in in_progress %}
+                            <span class="status-dot running"></span>
+                            {% elif audit.summary.compliance_percentage >= 80 %}
+                            <span class="status-dot good"></span>
+                            {% elif audit.summary.compliance_percentage >= 50 %}
+                            <span class="status-dot warning"></span>
+                            {% else %}
+                            <span class="status-dot danger"></span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-group">
+                                <a href="{{ url_for('results', audit_id=audit.audit_id) }}" class="btn btn-sm btn-outline">View</a>
+                                {% if audit.audit_id not in in_progress %}
+                                <a href="{{ url_for('download', audit_id=audit.audit_id, fmt='html') }}" class="btn btn-sm btn-ghost" title="Download HTML">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                                </a>
+                                {% endif %}
+                                {% if current_user and current_user.is_admin %}
+                                <form action="{{ url_for('delete_audit', audit_id=audit.audit_id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete this audit?')">
+                                    <button type="submit" class="btn btn-sm btn-danger-ghost" title="Delete">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+        <div class="empty-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+        </div>
+        <h2 class="empty-title">No audits yet</h2>
+        <p class="empty-text">Run your first Active Directory compliance audit to see results here.</p>
+        {% if current_user and current_user.is_admin %}
+        <a href="{{ url_for('online_audit') }}" class="btn btn-primary btn-lg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+            </svg>
+            Start First Audit
+        </a>
+        {% else %}
+        <p class="text-muted text-sm" style="margin-top:0.5rem;">No audits have been run yet. Contact an administrator to initiate one.</p>
+        {% endif %}
+    </div>
+
+    <!-- Feature Highlights -->
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon feature-icon-blue">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+            </div>
+            <h3>34 ISO Controls</h3>
+            <p>Full coverage of ISO 27001:2022 Annex A.8 technical controls across Active Directory.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon feature-icon-green">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
+                </svg>
+            </div>
+            <h3>Live Audit Logs</h3>
+            <p>Watch every check execute in real time with live streaming logs as the audit progresses.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon feature-icon-purple">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                </svg>
+            </div>
+            <h3>HTML &amp; PDF Reports</h3>
+            <p>Download professional compliance reports in HTML or PDF format for documentation.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon feature-icon-amber">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+                </svg>
+            </div>
+            <h3>Remediation Guidance</h3>
+            <p>Step-by-step remediation instructions for every failed control to achieve compliance.</p>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

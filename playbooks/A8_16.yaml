@@ -1,0 +1,48 @@
+# ============================================================
+# A.8.16 - Monitoring Activities
+# ============================================================
+# Checks event log configuration and forwarding.
+
+control: "A.8.16"
+control_name: "Monitoring Activities"
+
+checks:
+  - id: "A.8.16.1"
+    title: "Security Event Log Size Adequate"
+    description: "The Security event log should have a maximum size of at least 1GB to retain sufficient audit history."
+    severity: "medium"
+    powershell: |
+      $log = Get-WinEvent -ListLog Security
+      [math]::Round($log.MaximumSizeInBytes / 1MB, 0)
+    check:
+      operator: "greater_than_equal"
+      expected: "1024"
+    remediation: |
+      1. Configure via GPO:
+         Computer Configuration > Administrative Templates > Windows Components >
+         Event Log Service > Security > Maximum Log Size
+      2. Set to at least 1048576 KB (1 GB)
+      3. Or via PowerShell:
+         wevtutil sl Security /ms:1073741824
+      4. Configure log retention to "Archive when full"
+
+  - id: "A.8.16.2"
+    title: "Windows Event Forwarding Configured"
+    description: "Event forwarding should be configured to centralize security logs from all DCs and critical servers."
+    severity: "medium"
+    powershell: |
+      $wecsvc = Get-Service Wecsvc -ErrorAction SilentlyContinue
+      if ($wecsvc -and $wecsvc.Status -eq 'Running') { "True" } else {
+        $winrm = Get-Service WinRM -ErrorAction SilentlyContinue
+        if ($winrm -and $winrm.Status -eq 'Running') { "Partial" } else { "False" }
+      }
+    check:
+      operator: "not_equals"
+      expected: "False"
+    remediation: |
+      1. Configure Windows Event Collector:
+         wecutil qc
+      2. Create a subscription for security events:
+         wecutil cs subscription.xml
+      3. Or use a SIEM solution (Splunk, ELK, Azure Sentinel)
+      4. Ensure all DCs forward critical events to the collector

@@ -1,0 +1,45 @@
+# ============================================================
+# A.8.31 - Separation of Development, Test & Production
+# ============================================================
+# Checks OU separation for dev/test/prod environments.
+
+control: "A.8.31"
+control_name: "Separation of Development, Test and Production Environments"
+
+checks:
+  - id: "A.8.31.1"
+    title: "Separate OUs for Different Environments"
+    description: "Separate Organizational Units should exist for development, test, and production environments."
+    severity: "medium"
+    powershell: |
+      $ous = Get-ADOrganizationalUnit -Filter * | Select -ExpandProperty Name
+      $envOUs = $ous | Where-Object { $_ -match 'Dev|Test|Staging|QA|Prod|Production|UAT' }
+      if ($envOUs) { ($envOUs -join ', ') } else { "None found" }
+    check:
+      operator: "not_equals"
+      expected: "None found"
+    remediation: |
+      1. Create separate OUs for each environment:
+         New-ADOrganizationalUnit -Name "Development" -Path "DC=domain,DC=com"
+         New-ADOrganizationalUnit -Name "Testing" -Path "DC=domain,DC=com"
+         New-ADOrganizationalUnit -Name "Production" -Path "DC=domain,DC=com"
+      2. Apply different GPOs to each environment OU
+      3. Ensure network segmentation between environments
+      4. Use separate service accounts for each environment
+
+  - id: "A.8.31.2"
+    title: "Dev/Test Groups Separate from Production"
+    description: "Security groups for development and testing should be separate from production groups."
+    severity: "low"
+    powershell: |
+      $devGroups = Get-ADGroup -Filter {Name -like '*Dev*' -or Name -like '*Test*' -or Name -like '*QA*'} | Measure-Object
+      if ($devGroups.Count -gt 0) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Create separate groups for each environment:
+         New-ADGroup -Name "Dev-Users" -GroupScope Global -GroupCategory Security
+         New-ADGroup -Name "Test-Users" -GroupScope Global -GroupCategory Security
+      2. Ensure production groups don't contain dev/test members
+      3. Use RBAC to restrict cross-environment access

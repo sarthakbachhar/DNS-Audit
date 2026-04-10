@@ -1,0 +1,42 @@
+# ============================================================
+# A.8.11 - Data Masking
+# ============================================================
+# Checks sensitive attribute protection in AD.
+
+control: "A.8.11"
+control_name: "Data Masking"
+
+checks:
+  - id: "A.8.11.1"
+    title: "Confidential Attributes Protected"
+    description: "Sensitive AD attributes should have ACLs restricting who can read them, protecting data like personal information."
+    severity: "medium"
+    powershell: |
+      $schema = Get-ADObject -SearchBase (Get-ADRootDSE).schemaNamingContext -Filter {Name -eq 'ms-DS-UserPassword-Expiry-Time-Computed'} -Properties searchFlags
+      if ($schema) { "True" } else { "False" }
+    check:
+      operator: "exists"
+      expected: ""
+    remediation: |
+      1. Identify sensitive attributes in your AD schema
+      2. Mark attributes as confidential using searchFlags:
+         Set-ADObject -Identity "CN=attributeName,CN=Schema,CN=Configuration,DC=domain,DC=com" -Replace @{searchFlags=128}
+      3. Configure ACLs to restrict read access to sensitive attributes
+      4. Use Fine-Grained Password Policies for sensitive user groups
+
+  - id: "A.8.11.2"
+    title: "Fine-Grained Password Policies Exist"
+    description: "Fine-Grained Password Policies (FGPP) should be defined for groups requiring stricter controls (admins, service accounts)."
+    severity: "medium"
+    powershell: |
+      $fgpp = Get-ADFineGrainedPasswordPolicy -Filter *
+      if ($fgpp) { ($fgpp | Measure-Object).Count.ToString() } else { "0" }
+    check:
+      operator: "greater_than_equal"
+      expected: "1"
+    remediation: |
+      1. Create a Fine-Grained Password Policy:
+         New-ADFineGrainedPasswordPolicy -Name "AdminPasswordPolicy" -Precedence 10 -ComplexityEnabled $true -MinPasswordLength 16 -MaxPasswordAge "60.00:00:00" -PasswordHistoryCount 24
+      2. Apply to a group:
+         Add-ADFineGrainedPasswordPolicySubject -Identity "AdminPasswordPolicy" -Subjects "Domain Admins"
+      3. Verify: Get-ADFineGrainedPasswordPolicy -Filter *

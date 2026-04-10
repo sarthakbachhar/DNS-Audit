@@ -1,0 +1,506 @@
+{% extends "base.html" %}
+{% block title %}
+  {% if status == 'in_progress' %}Audit Running… — ISO Audit
+  {% else %}Results — {{ data.summary.hostname }} — ISO Audit{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+{% if status == 'in_progress' %}
+<!-- ============================================================
+     IN-PROGRESS: Live log streaming view
+     ============================================================ -->
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="running-indicator">
+            <span class="pulse-dot"></span>
+            <h1 class="page-title">Audit Running</h1>
+        </div>
+        <p class="page-subtitle">
+            Target: <strong>{{ data.summary.hostname }}</strong> —
+            Streaming live logs from the audit engine
+        </p>
+    </div>
+</div>
+
+<div class="progress-layout">
+    <!-- Log terminal -->
+    <div class="card log-card">
+        <div class="log-header">
+            <div class="log-header-left">
+                <span class="terminal-dot red"></span>
+                <span class="terminal-dot yellow"></span>
+                <span class="terminal-dot green"></span>
+                <span class="log-title">Audit Console</span>
+            </div>
+            <div class="log-header-right">
+                <span class="log-status" id="logStatus">
+                    <span class="spinner-sm"></span>
+                    Connecting…
+                </span>
+            </div>
+        </div>
+        <div class="log-body" id="logBody">
+            <div class="log-line log-info" id="logWelcome">Waiting for audit engine to start…</div>
+        </div>
+    </div>
+
+    <!-- Progress sidebar -->
+    <div class="progress-sidebar">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Audit Details</h3>
+            </div>
+            <div class="info-list">
+                <div class="info-row">
+                    <span class="info-key">Host</span>
+                    <span class="info-val">{{ data.summary.hostname }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">Started</span>
+                    <span class="info-val">{{ data.summary.timestamp[:19].replace('T',' ') }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">Status</span>
+                    <span class="info-val" id="sideStatus">
+                        <span class="badge badge-info">In Progress</span>
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">Log lines</span>
+                    <span class="info-val" id="logCount">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">What's Happening</h3>
+            </div>
+            <ol class="steps-list steps-compact">
+                <li class="step-item" id="step1">
+                    <span class="step-num step-pending">1</span>
+                    <div>WinRM Connection</div>
+                </li>
+                <li class="step-item" id="step2">
+                    <span class="step-num step-pending">2</span>
+                    <div>System Discovery</div>
+                </li>
+                <li class="step-item" id="step3">
+                    <span class="step-num step-pending">3</span>
+                    <div>Running Playbooks</div>
+                </li>
+                <li class="step-item" id="step4">
+                    <span class="step-num step-pending">4</span>
+                    <div>Building Report</div>
+                </li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- ============================================================
+     COMPLETE / ERROR: Full results view
+     ============================================================ -->
+
+{% if data.get('error') %}
+<!-- Error state -->
+<div class="page-header">
+    <div class="page-header-left">
+        <h1 class="page-title">Audit Failed</h1>
+        <p class="page-subtitle">Target: {{ data.summary.hostname }}</p>
+    </div>
+    {% if current_user and current_user.is_admin %}
+    <a href="{{ url_for('online_audit') }}" class="btn btn-primary">Try Again</a>
+    {% endif %}
+</div>
+<div class="alert alert-error">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+    </svg>
+    {{ data.error }}
+</div>
+
+{% else %}
+<!-- Success state -->
+<div class="results-header">
+    <div class="results-header-left">
+        <a href="{{ url_for('index') }}" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12,19 5,12 12,5"/>
+            </svg>
+            Dashboard
+        </a>
+        <h1 class="results-title">{{ data.summary.hostname }}</h1>
+        <div class="results-meta">
+            <span class="meta-chip">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/>
+                </svg>
+                {{ data.summary.timestamp[:19].replace('T', ' ') }}
+            </span>
+            <span class="meta-chip">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+                {{ data.summary.os }}
+            </span>
+            {% if data.summary.get('domain') and data.summary.domain != 'Unknown' %}
+            <span class="meta-chip">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+                </svg>
+                {{ data.summary.domain }}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="results-actions">
+        <a href="{{ url_for('download', audit_id=audit_id, fmt='html') }}" class="btn btn-outline">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+            </svg>
+            HTML
+        </a>
+        <a href="{{ url_for('download', audit_id=audit_id, fmt='pdf') }}" class="btn btn-primary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+            </svg>
+            PDF
+        </a>
+        {% if current_user and current_user.is_admin %}
+        <form action="{{ url_for('delete_audit', audit_id=audit_id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete this audit?')">
+            <button type="submit" class="btn btn-outline btn-icon" title="Delete audit">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                </svg>
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="summary-grid">
+    <div class="summary-card">
+        <div class="summary-card-body">
+            <span class="summary-value">{{ data.summary.total }}</span>
+            <span class="summary-label">Total Checks</span>
+        </div>
+        <div class="summary-icon summary-icon-total">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+        </div>
+    </div>
+    <div class="summary-card summary-card-pass">
+        <div class="summary-card-body">
+            <span class="summary-value text-success">{{ data.summary.passed }}</span>
+            <span class="summary-label">Passed</span>
+        </div>
+        <div class="summary-icon summary-icon-pass">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/>
+            </svg>
+        </div>
+    </div>
+    <div class="summary-card summary-card-fail">
+        <div class="summary-card-body">
+            <span class="summary-value text-danger">{{ data.summary.failed }}</span>
+            <span class="summary-label">Failed</span>
+        </div>
+        <div class="summary-icon summary-icon-fail">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+        </div>
+    </div>
+    <div class="summary-card summary-card-score">
+        <div class="summary-card-body">
+            <span class="summary-value
+                {% if data.summary.compliance_percentage >= 80 %}text-success
+                {% elif data.summary.compliance_percentage >= 50 %}text-warning
+                {% else %}text-danger{% endif %}">
+                {{ data.summary.compliance_percentage }}%
+            </span>
+            <span class="summary-label">Compliance Score</span>
+        </div>
+        <div class="summary-icon summary-icon-score">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+        </div>
+    </div>
+</div>
+
+<!-- Compliance Bar -->
+<div class="compliance-section">
+    <div class="compliance-bar-row">
+        <span class="compliance-label">Overall Compliance</span>
+        <span class="compliance-pct
+            {% if data.summary.compliance_percentage >= 80 %}text-success
+            {% elif data.summary.compliance_percentage >= 50 %}text-warning
+            {% else %}text-danger{% endif %}">
+            {{ data.summary.compliance_percentage }}%
+        </span>
+    </div>
+    <div class="compliance-track">
+        <div class="compliance-fill
+            {% if data.summary.compliance_percentage >= 80 %}fill-good
+            {% elif data.summary.compliance_percentage >= 50 %}fill-warning
+            {% else %}fill-danger{% endif %}"
+            style="width: {{ data.summary.compliance_percentage }}%">
+        </div>
+    </div>
+    <div class="compliance-legend">
+        <span class="legend-item legend-danger">0–49%</span>
+        <span class="legend-item legend-warning">50–79%</span>
+        <span class="legend-item legend-good">80–100%</span>
+    </div>
+</div>
+
+<!-- Severity Breakdown -->
+<div class="severity-row">
+    <div class="severity-card sev-high">
+        <div class="sev-top">
+            <span class="sev-badge sev-high-badge">HIGH</span>
+            <span class="sev-count">{{ data.severity_summary.high.passed + data.severity_summary.high.failed }} checks</span>
+        </div>
+        <div class="sev-bottom">
+            <span class="sev-pass">✓ {{ data.severity_summary.high.passed }} passed</span>
+            <span class="sev-fail">✗ {{ data.severity_summary.high.failed }} failed</span>
+        </div>
+    </div>
+    <div class="severity-card sev-medium">
+        <div class="sev-top">
+            <span class="sev-badge sev-medium-badge">MEDIUM</span>
+            <span class="sev-count">{{ data.severity_summary.medium.passed + data.severity_summary.medium.failed }} checks</span>
+        </div>
+        <div class="sev-bottom">
+            <span class="sev-pass">✓ {{ data.severity_summary.medium.passed }} passed</span>
+            <span class="sev-fail">✗ {{ data.severity_summary.medium.failed }} failed</span>
+        </div>
+    </div>
+    <div class="severity-card sev-low">
+        <div class="sev-top">
+            <span class="sev-badge sev-low-badge">LOW</span>
+            <span class="sev-count">{{ data.severity_summary.low.passed + data.severity_summary.low.failed }} checks</span>
+        </div>
+        <div class="sev-bottom">
+            <span class="sev-pass">✓ {{ data.severity_summary.low.passed }} passed</span>
+            <span class="sev-fail">✗ {{ data.severity_summary.low.failed }} failed</span>
+        </div>
+    </div>
+</div>
+
+<!-- Filter + Results -->
+<div class="results-section">
+    <div class="results-toolbar">
+        <h2 class="section-title">Detailed Results</h2>
+        <div class="filter-tabs" id="filterTabs">
+            <button class="filter-tab active" data-filter="all">All ({{ data.summary.total }})</button>
+            <button class="filter-tab" data-filter="PASS">
+                <span class="tab-dot tab-pass"></span>Passed ({{ data.summary.passed }})
+            </button>
+            <button class="filter-tab" data-filter="FAIL">
+                <span class="tab-dot tab-fail"></span>Failed ({{ data.summary.failed }})
+            </button>
+            {% if data.summary.errors > 0 %}
+            <button class="filter-tab" data-filter="ERROR">
+                <span class="tab-dot tab-error"></span>Errors ({{ data.summary.errors }})
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    {% for control in data.controls %}
+    <div class="control-group" id="cg-{{ loop.index }}">
+        <div class="control-group-header">
+            <div class="cg-header-left">
+                <span class="cg-id">{{ control.control }}</span>
+                <h3 class="cg-name">{{ control.control_name }}</h3>
+            </div>
+            <div class="cg-header-right">
+                <span class="cg-pass">{{ control.checks | selectattr('status', 'equalto', 'PASS') | list | length }} passed</span>
+                <span class="cg-sep">·</span>
+                <span class="cg-fail">{{ control.checks | selectattr('status', 'equalto', 'FAIL') | list | length }} failed</span>
+            </div>
+        </div>
+
+        {% for check in control.checks %}
+        <div class="check-card" data-status="{{ check.status }}">
+            <div class="check-header" onclick="toggleCheck(this)">
+                <span class="check-status-icon status-{{ check.status | lower }}">
+                    {% if check.status == 'PASS' %}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20,6 9,17 4,12"/></svg>
+                    {% elif check.status == 'FAIL' %}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    {% else %}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    {% endif %}
+                </span>
+                <div class="check-info">
+                    <span class="check-title">{{ check.title }}</span>
+                    <span class="check-id">{{ check.id }}</span>
+                </div>
+                <span class="sev-pill sev-pill-{{ check.severity }}">{{ check.severity | upper }}</span>
+                <span class="check-chevron">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>
+                </span>
+            </div>
+
+            <div class="check-body">
+                {% if check.description %}
+                <p class="check-desc">{{ check.description }}</p>
+                {% endif %}
+
+                <div class="check-detail-grid">
+                    <div class="detail-cell">
+                        <span class="detail-label">Expected</span>
+                        <span class="detail-value">{{ check.expected_value }}</span>
+                    </div>
+                    <div class="detail-cell">
+                        <span class="detail-label">Actual</span>
+                        <span class="detail-value {% if check.status == 'FAIL' %}text-danger{% elif check.status == 'PASS' %}text-success{% endif %}">
+                            {{ check.actual_value }}
+                        </span>
+                    </div>
+                    <div class="detail-cell">
+                        <span class="detail-label">Operator</span>
+                        <span class="detail-value text-muted">{{ check.operator }}</span>
+                    </div>
+                </div>
+
+                {% if check.remediation %}
+                <div class="remediation">
+                    <div class="remediation-header">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+                        </svg>
+                        Remediation Steps
+                    </div>
+                    <pre class="remediation-content">{{ check.remediation }}</pre>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+
+{% endif %}
+{% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if status == 'in_progress' %}
+<script>
+(function () {
+    const auditId = {{ audit_id | tojson }};
+    const logBody = document.getElementById('logBody');
+    const logStatus = document.getElementById('logStatus');
+    const logCount = document.getElementById('logCount');
+    let lineCount = 0;
+
+    // Step tracker helpers
+    function setStep(n, state) {
+        const el = document.getElementById('step' + n);
+        if (!el) return;
+        const num = el.querySelector('.step-num');
+        num.className = 'step-num step-' + state;
+        if (state === 'done') num.textContent = '✓';
+        else if (state === 'active') num.textContent = n;
+    }
+
+    function classifyLine(text) {
+        if (/error/i.test(text)) return 'log-error';
+        if (/fail/i.test(text)) return 'log-fail';
+        if (/✓|pass/i.test(text)) return 'log-pass';
+        if (/connecting|connect/i.test(text)) return 'log-info';
+        if (/\[.*\/.*\]/i.test(text)) return 'log-playbook';
+        if (/check /i.test(text)) return 'log-check';
+        return 'log-default';
+    }
+
+    function appendLine(text) {
+        // Remove welcome placeholder
+        const welcome = document.getElementById('logWelcome');
+        if (welcome) welcome.remove();
+
+        const div = document.createElement('div');
+        div.className = 'log-line ' + classifyLine(text);
+        const ts = new Date().toLocaleTimeString('en-GB', {hour12: false});
+        div.innerHTML = '<span class="log-ts">' + ts + '</span><span class="log-msg">' + escapeHtml(text) + '</span>';
+        logBody.appendChild(div);
+        logBody.scrollTop = logBody.scrollHeight;
+        lineCount++;
+        logCount.textContent = lineCount;
+
+        // Update step indicators
+        if (/Connecting|WinRM/i.test(text)) setStep(1, 'active');
+        if (/Connected successfully/i.test(text)) { setStep(1, 'done'); setStep(2, 'active'); }
+        if (/Gathering system/i.test(text)) setStep(2, 'active');
+        if (/OS:|Domain:/i.test(text)) { setStep(2, 'done'); setStep(3, 'active'); }
+        if (/\[1\//i.test(text)) { setStep(2, 'done'); setStep(3, 'active'); }
+        if (/Audit complete/i.test(text)) { setStep(3, 'done'); setStep(4, 'active'); }
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // Connect SSE
+    logStatus.innerHTML = '<span class="spinner-sm"></span> Streaming…';
+    const evtSource = new EventSource('/api/audit/logs/' + auditId);
+
+    evtSource.onmessage = function(e) {
+        const msg = e.data;
+        if (msg === '__DONE__') {
+            evtSource.close();
+            logStatus.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg> Done';
+            setStep(4, 'done');
+            appendLine('✓ Audit complete — loading results…');
+            // Poll for completion then reload
+            setTimeout(function poll() {
+                fetch('/api/audit/status/' + auditId)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.status !== 'in_progress') {
+                            window.location.reload();
+                        } else {
+                            setTimeout(poll, 1500);
+                        }
+                    })
+                    .catch(() => setTimeout(poll, 2000));
+            }, 800);
+        } else {
+            appendLine(msg);
+        }
+    };
+
+    evtSource.onerror = function() {
+        evtSource.close();
+        logStatus.textContent = 'Connection lost — polling…';
+        // Fall back to polling
+        setTimeout(function poll() {
+            fetch('/api/audit/status/' + auditId)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status !== 'in_progress') {
+                        window.location.reload();
+                    } else {
+                        setTimeout(poll, 2500);
+                    }
+                })
+                .catch(() => setTimeout(poll, 3000));
+        }, 2000);
+    };
+})();
+</script>
+{% endif %}
+{% endblock %}

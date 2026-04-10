@@ -1,0 +1,47 @@
+# ============================================================
+# A.8.3 - Information Access Restriction
+# ============================================================
+# Checks OU-based access control and delegation in AD.
+
+control: "A.8.3"
+control_name: "Information Access Restriction"
+
+checks:
+  - id: "A.8.3.1"
+    title: "Organizational Units (OU) Structure Exists"
+    description: "AD should have a structured OU hierarchy to enable proper access control delegation and Group Policy application."
+    severity: "medium"
+    powershell: |
+      (Get-ADOrganizationalUnit -Filter * | Measure-Object).Count
+    check:
+      operator: "greater_than_equal"
+      expected: "3"
+    remediation: |
+      1. Plan an OU structure based on your organization (e.g., by department, location, function)
+      2. Create OUs:
+         New-ADOrganizationalUnit -Name "IT Department" -Path "DC=domain,DC=com"
+      3. Move users and computers into appropriate OUs
+      4. Apply GPOs at OU level for granular access control
+
+  - id: "A.8.3.2"
+    title: "OU Delegation Properly Configured"
+    description: "Administrative delegation should be configured at the OU level to enforce principle of least privilege."
+    severity: "medium"
+    powershell: |
+      $ous = Get-ADOrganizationalUnit -Filter *
+      $delegated = 0
+      foreach ($ou in $ous) {
+        $acl = Get-Acl "AD:\$($ou.DistinguishedName)"
+        $customAces = $acl.Access | Where-Object { $_.IdentityReference -notmatch 'BUILTIN|NT AUTHORITY|S-1-5' -and $_.IsInherited -eq $false }
+        if ($customAces) { $delegated++ }
+      }
+      if ($delegated -gt 0) { "True" } else { "False" }
+    check:
+      operator: "is_true"
+      expected: "True"
+    remediation: |
+      1. Identify administrative tasks that can be delegated
+      2. Use the Delegation of Control Wizard:
+         Right-click an OU > Delegate Control
+      3. Assign specific permissions to security groups (not individual users)
+      4. Document all delegations for audit purposes

@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Audit Settings — ISO Audit{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1 class="page-title">Audit Settings</h1>
+            <p class="page-subtitle">Enable or disable individual ISO 27001:2022 Annex A.8 controls. Only enabled controls will run during an audit.</p>
+        </div>
+        <div class="page-header-right">
+            <span class="settings-summary-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20,6 9,17 4,12"/>
+                </svg>
+                {{ enabled_count }} / {{ controls|length }} enabled
+            </span>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('audit_settings') }}" id="settingsForm">
+
+        <!-- Toolbar -->
+        <div class="settings-toolbar">
+            <div class="settings-toolbar-left">
+                <button type="button" class="btn btn-sm btn-outline" id="selectAll">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="9,11 12,14 22,4"/>
+                    </svg>
+                    Enable All
+                </button>
+                <button type="button" class="btn btn-sm btn-outline" id="deselectAll">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/>
+                    </svg>
+                    Disable All
+                </button>
+            </div>
+            <button type="submit" class="btn btn-primary" id="saveBtn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+                    <polyline points="17,21 17,13 7,13 7,21"/>
+                    <polyline points="7,3 7,8 15,8"/>
+                </svg>
+                Save Settings
+            </button>
+        </div>
+
+        <!-- Controls checklist -->
+        <div class="settings-grid">
+            {% for ctrl in controls %}
+            <div class="settings-card {% if not ctrl.enabled %}settings-card-disabled{% endif %}" id="card-{{ ctrl.id | replace('.', '-') }}">
+                <div class="settings-card-header">
+                    <label class="settings-toggle" for="ctrl-{{ ctrl.id | replace('.', '-') }}">
+                        <input
+                            type="checkbox"
+                            id="ctrl-{{ ctrl.id | replace('.', '-') }}"
+                            name="{{ ctrl.id }}"
+                            class="settings-checkbox"
+                            {% if ctrl.enabled %}checked{% endif %}
+                        >
+                        <span class="settings-toggle-track">
+                            <span class="settings-toggle-thumb"></span>
+                        </span>
+                    </label>
+                    <div class="settings-card-info">
+                        <div class="settings-card-title">
+                            <span class="settings-control-id">{{ ctrl.id }}</span>
+                            <span class="settings-control-name">{{ ctrl.name }}</span>
+                        </div>
+                        <span class="settings-check-count">{{ ctrl.checks }} check{{ 's' if ctrl.checks != 1 }}</span>
+                    </div>
+                    <span class="settings-status-pill {% if ctrl.enabled %}pill-enabled{% else %}pill-disabled{% endif %}"
+                          id="pill-{{ ctrl.id | replace('.', '-') }}">
+                        {% if ctrl.enabled %}Enabled{% else %}Disabled{% endif %}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Sticky save bar -->
+        <div class="settings-save-bar">
+            <span class="settings-save-hint" id="saveHint">No unsaved changes</span>
+            <button type="submit" class="btn btn-primary">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+                    <polyline points="17,21 17,13 7,13 7,21"/>
+                    <polyline points="7,3 7,8 15,8"/>
+                </svg>
+                Save Settings
+            </button>
+        </div>
+
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const checkboxes = document.querySelectorAll('.settings-checkbox');
+
+    // Track initial state to detect changes
+    const initial = {};
+    checkboxes.forEach(cb => { initial[cb.name] = cb.checked; });
+
+    function updateCard(cb) {
+        const id      = cb.id.replace('ctrl-', '');
+        const card    = document.getElementById('card-' + id);
+        const pill    = document.getElementById('pill-' + id);
+        if (cb.checked) {
+            card.classList.remove('settings-card-disabled');
+            pill.textContent = 'Enabled';
+            pill.className   = 'settings-status-pill pill-enabled';
+        } else {
+            card.classList.add('settings-card-disabled');
+            pill.textContent = 'Disabled';
+            pill.className   = 'settings-status-pill pill-disabled';
+        }
+        checkUnsaved();
+    }
+
+    function checkUnsaved() {
+        const hint = document.getElementById('saveHint');
+        const changed = Array.from(checkboxes).some(cb => cb.checked !== initial[cb.name]);
+        hint.textContent = changed ? 'You have unsaved changes' : 'No unsaved changes';
+        hint.style.color = changed ? 'var(--warning)' : 'var(--text-muted)';
+    }
+
+    // Live toggle feedback
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', () => updateCard(cb));
+    });
+
+    // Enable All
+    document.getElementById('selectAll').addEventListener('click', () => {
+        checkboxes.forEach(cb => { cb.checked = true; updateCard(cb); });
+    });
+
+    // Disable All
+    document.getElementById('deselectAll').addEventListener('click', () => {
+        checkboxes.forEach(cb => { cb.checked = false; updateCard(cb); });
+    });
+
+    // Warn if navigating away with unsaved changes
+    window.addEventListener('beforeunload', function (e) {
+        const changed = Array.from(checkboxes).some(cb => cb.checked !== initial[cb.name]);
+        if (changed) { e.preventDefault(); e.returnValue = ''; }
+    });
+
+    // Clear the beforeunload guard on form submit
+    document.getElementById('settingsForm').addEventListener('submit', () => {
+        window.onbeforeunload = null;
+    });
+})();
+</script>
+{% endblock %}

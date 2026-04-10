@@ -1,0 +1,29 @@
+# ============================================================
+# A.8.25 - Secure Development Lifecycle
+# ============================================================
+# Checks AD Certificate Services template security.
+
+control: "A.8.25"
+control_name: "Secure Development Lifecycle"
+
+checks:
+  - id: "A.8.25.1"
+    title: "AD Certificate Services Templates Secured"
+    description: "If AD Certificate Services (ADCS) is deployed, certificate templates should have restricted enrollment permissions."
+    severity: "medium"
+    powershell: |
+      $adcs = Get-Service -Name CertSvc -ErrorAction SilentlyContinue
+      if ($adcs) {
+        $templates = certutil -template 2>&1 | Select-String 'Template\[' | Measure-Object
+        "$($templates.Count) templates found"
+      } else { "ADCS not installed" }
+    check:
+      operator: "exists"
+      expected: ""
+    remediation: |
+      1. Review certificate templates:
+         certutil -template
+      2. Remove overly permissive templates:
+         certutil -deltemplate "WebServer"
+      3. Ensure "Authenticated Users" don't have auto-enroll on sensitive templates
+      4. Use Certificate Template security settings to restrict enrollment
