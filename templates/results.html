@@ -172,6 +172,7 @@
         </a>
         {% if current_user and current_user.is_admin %}
         <form action="{{ url_for('delete_audit', audit_id=audit_id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete this audit?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-outline btn-icon" title="Delete audit">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>

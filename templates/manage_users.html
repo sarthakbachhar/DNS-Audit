@@ -81,6 +81,7 @@
                                     {% if user.id != current_uid %}
                                     <form action="{{ url_for('manage_users') }}" method="POST" style="display:inline;"
                                           onsubmit="return confirm('Delete user \'{{ user.username }}\'? This cannot be undone.')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <input type="hidden" name="action" value="delete">
                                         <input type="hidden" name="user_id" value="{{ user.id }}">
                                         <button type="submit" class="btn btn-sm btn-danger-ghost" title="Delete user">
@@ -118,6 +119,7 @@
                     </h2>
                 </div>
                 <form method="POST" action="{{ url_for('manage_users') }}" class="audit-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="action" value="create">
 
                     <div class="form-group">

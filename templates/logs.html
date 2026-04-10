@@ -20,6 +20,7 @@
             {% if current_user and current_user.is_admin %}
             <form action="{{ url_for('clear_activity_logs') }}" method="POST" style="display:inline;"
                   onsubmit="return confirm('Clear all activity logs? This cannot be undone.')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-sm btn-danger-ghost">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="3,6 5,6 21,6"/>

@@ -1,0 +1,23 @@
+# Don't copy these into the Docker image
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.env
+.git/
+.gitignore
+.vscode/
+*.egg-info/
+dist/
+build/
+
+# Local reports and logs — these live in Docker volumes instead
+reports/
+logs/
+
+# No need to ship these
+README.md
+docker-compose.yml
+Dockerfile
+entrypoint.sh

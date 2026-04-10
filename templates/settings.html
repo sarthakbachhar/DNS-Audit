@@ -20,6 +20,7 @@
     </div>
 
     <form method="POST" action="{{ url_for('audit_settings') }}" id="settingsForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <!-- Toolbar -->
         <div class="settings-toolbar">

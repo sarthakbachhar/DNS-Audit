@@ -95,6 +95,7 @@
                  ============================================================ -->
             <div class="login-panel {% if active_tab == 'login' %}active{% endif %}" id="panel-login">
                 <form method="POST" action="{{ url_for('auth.login') }}" autocomplete="on">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="action" value="login">
 
                     <div class="form-group">
@@ -154,6 +155,7 @@
                  ============================================================ -->
             <div class="login-panel {% if active_tab == 'register' %}active{% endif %}" id="panel-register">
                 <form method="POST" action="{{ url_for('auth.login') }}" autocomplete="off">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="action" value="register">
 
                     <div class="form-row-2">

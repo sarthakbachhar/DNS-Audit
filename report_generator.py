@@ -3,7 +3,7 @@
 
 import os
 from datetime import datetime
-from jinja2 import Template
+from jinja2 import Environment, BaseLoader
 
 
 # Full standalone HTML template with all styles inlined.
@@ -373,7 +373,8 @@ class ReportGenerator:
         os.makedirs(self.reports_dir, exist_ok=True)
 
     def generate_html_report(self, audit_data, audit_id):
-        template = Template(REPORT_TEMPLATE)
+        env = Environment(loader=BaseLoader(), autoescape=True)
+        template = env.from_string(REPORT_TEMPLATE)
         html_content = template.render(
             summary=audit_data['summary'],
             results=audit_data['results'],
@@ -396,7 +397,8 @@ class ReportGenerator:
             print("[WARNING] xhtml2pdf not installed. Run: pip install xhtml2pdf")
             return None
 
-        template = Template(REPORT_TEMPLATE)
+        env = Environment(loader=BaseLoader(), autoescape=True)
+        template = env.from_string(REPORT_TEMPLATE)
         html_content = template.render(
             summary=audit_data['summary'],
             results=audit_data['results'],

@@ -27,6 +27,7 @@
                 </div>
 
                 <form action="{{ url_for('run_online_audit') }}" method="POST" id="adAuditForm" class="audit-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="form-group">
                         <label for="host" class="form-label">AD Server IP / Hostname</label>
                         <input type="text" name="host" id="host" class="form-input"

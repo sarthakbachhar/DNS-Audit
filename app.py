@@ -14,6 +14,7 @@ from flask import (
     Flask, render_template, request, session,
     redirect, url_for, flash, send_file, jsonify, Response, stream_with_context
 )
+from flask_wtf.csrf import CSRFProtect
 
 from ad_audit_engine import ADAuditEngine
 from report_generator import ReportGenerator
@@ -29,6 +30,7 @@ from database import (
 )
 
 app = Flask(__name__)
+csrf = CSRFProtect(app)
 
 # Keep a fixed secret key so sessions don't break on reload.
 # Change this in production or set SECRET_KEY in the environment.
@@ -517,4 +519,6 @@ if __name__ == '__main__':
 
     print('  http://localhost:5000')
     print('=' * 60)
-    app.run(debug=True, host='0.0.0.0', port=5000, threaded=True)
+    debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+    host  = os.environ.get('FLASK_HOST', '127.0.0.1')
+    app.run(debug=debug, host=host, port=5000, threaded=True)

@@ -1,6 +1,7 @@
 # Handles login, user creation, session management, and access control.
 # DB credentials are hardcoded here so there's only one place to change them.
 
+import os
 import logging
 from functools import wraps
 
@@ -14,13 +15,14 @@ from flask import (
 
 logger = logging.getLogger(__name__)
 
-# Database connection details — update these if the MySQL setup changes
+# Database connection details — read from environment variables so Docker/docker-compose
+# can inject the correct host. Falls back to the original hardcoded values for local dev.
 DB_CONFIG = {
-    "host":     "localhost",
-    "port":     3306,
-    "user":     "root",
-    "password": "mysql@toor",
-    "database": "iso_audit",
+    "host":     os.environ.get("DB_HOST",     "localhost"),
+    "port":     int(os.environ.get("DB_PORT", 3306)),
+    "user":     os.environ.get("DB_USER",     "root"),
+    "password": os.environ.get("DB_PASSWORD", "mysql@toor"),
+    "database": os.environ.get("DB_NAME",     "iso_audit"),
 }
 
 auth_bp = Blueprint('auth', __name__)
