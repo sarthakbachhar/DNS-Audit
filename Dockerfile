@@ -9,6 +9,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libxml2-dev \
         libxslt1-dev \
         zlib1g-dev \
+        libcairo2-dev \
+        pkg-config \
+        python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
