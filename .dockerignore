@@ -20,4 +20,3 @@ logs/
 README.md
 docker-compose.yml
 Dockerfile
-entrypoint.sh
