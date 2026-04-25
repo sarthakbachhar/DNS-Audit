@@ -122,7 +122,7 @@ def online_audit():
 
 
 def _audit_worker(audit_id, host, username, password, transport,
-                  created_by=None, enabled_controls=None):
+                  created_by=None, enabled_controls=None, started_by=None):
     """Runs in a background thread. Executes the audit and pushes log lines to the SSE queue."""
     q = audit_queues[audit_id]
 
@@ -149,7 +149,7 @@ def _audit_worker(audit_id, host, username, password, transport,
         compliance = results['summary']['compliance_percentage']
         app.logger.info("Audit done: %s, compliance=%.1f%%", audit_id, compliance)
         log_activity(
-            "Audit Completed", session.get("user", "system"),
+            "Audit Completed", started_by or "system",
             f"Audit {audit_id} on {host} — compliance: {compliance}%"
         )
 
@@ -178,7 +178,7 @@ def _audit_worker(audit_id, host, username, password, transport,
         audit_store[audit_id]  = err_data
         audit_status[audit_id] = 'error'
         q.put(f'ERROR: Connection failed - {exc}')
-        log_activity("Audit Failed", session.get("user", "system"),
+        log_activity("Audit Failed", started_by or "system",
                      f"Audit {audit_id} on {host} — connection error: {exc}")
         try:
             save_audit(audit_id, host, username, 'error', err_data, created_by)
@@ -199,7 +199,7 @@ def _audit_worker(audit_id, host, username, password, transport,
         audit_store[audit_id]  = err_data
         audit_status[audit_id] = 'error'
         q.put(f'ERROR: {exc}')
-        log_activity("Audit Failed", session.get("user", "system"),
+        log_activity("Audit Failed", started_by or "system",
                      f"Audit {audit_id} on {host} — error: {exc}")
         try:
             save_audit(audit_id, host, username, 'error', err_data, created_by)
@@ -270,9 +270,10 @@ def run_online_audit():
     print(f"  Transport : {transport.upper()}",   flush=True)
     print(f"{'='*60}",                            flush=True)
 
+    started_by = session.get("user", "system")
     t = threading.Thread(
         target=_audit_worker,
-        args=(audit_id, host, username, password, transport, created_by, enabled_controls),
+        args=(audit_id, host, username, password, transport, created_by, enabled_controls, started_by),
         daemon=True,
     )
     t.start()
