@@ -17,8 +17,8 @@ That's it. No Python, no MySQL, nothing else to install.
 
 ```bash
 # 1. Clone the repo
-git clone <your-repo-url>
-cd "ISO Audit App"
+git clone <repo-url>
+cd "DNS-Audit"
 
 # 2. Start the app
 docker compose up --build
