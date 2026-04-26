@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
 
-  # ── MySQL database ───────────────────────────────────────────────────────────
+  # MySQL database
   db:
     image: mysql:8.0
     restart: unless-stopped
@@ -18,14 +18,14 @@ services:
       retries: 10
       start_period: 20s
 
-  # ── Flask application ────────────────────────────────────────────────────────
+  # Flask application 
   app:
     build: .
     restart: unless-stopped
     ports:
       - "5000:5000"          # access at http://localhost:5000
     environment:
-      DB_HOST:     db         # "db" is the service name above — Docker resolves it
+      DB_HOST:     db         # "db" is the service name above - Docker resolves it
       DB_PORT:     3306
       DB_USER:     root
       DB_PASSWORD: mysql@toor
